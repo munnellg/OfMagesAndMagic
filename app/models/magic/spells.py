@@ -63,28 +63,12 @@ class NormalElement(Element):
 ##########################################
 #               Recievers                #
 ##########################################
-class Spell:
+
+class Effect(Effect):
     def apply_effect(self, caster, target):
         raise NotImplementedError
 
-    def is_castable_by(self, caster):
-        return self.element.is_compatible_with(caster.element)
-
-    def cast(self, caster, target):
-        raise NotImplementedError
-
-class GroupEffectSpell(Spell):
-    def cast(self, caster, targets):
-        for target in targets:
-            self.apply_effect(caster, target)
-
-class SingleEffectSpell(Spell):
-    def cast(self, caster, target):
-        if isinstance(target, list):
-            target = target[random.randint(0,len(target)-1)]
-        self.apply_effect(caster, target)
-
-class AttackSpell(Spell):
+class AttackEffect(Effect):
 
     def target_evades(self, caster, target):
         evasion  = target.get_stat_modifier('evasion')
@@ -136,21 +120,35 @@ class AttackSpell(Spell):
 
             target.take_damage(damage)
 
-class StatSpell(Spell):
-    def apply_effect(self, caster, target):
-        raise NotImplementedError
-
-class BoostStatSpell(Spell):
+class BoostStatEffect(Effect):
     def apply_effect(self, caster, target):
         target.boost_stat(self.stat, self.power)
 
-class ReduceStatSpell(Spell):
+class ReduceStatEffect(Effect):
     def apply_effect(self, caster, target):
         target.reduce_stat(self.stat, self.power)
 
-class HealingSpell(Spell):
+class HealingEffect(Effect):
     def apply_effect(self, caster, target):
         target.restore_health(self.power)
+
+class Spell:
+    def __init__(self, effect, element):
+        self.effect = effect
+        self.element = element
+        
+    def is_castable_by(self, caster):
+        return self.element.is_compatible_with(caster.element)
+
+    def cast(self, caster, target):
+        if isinstance(target, list):
+            target = target[random.randint(0,len(target)-1)]
+        self.effect.apply_effect(caster, target)
+
+class GroupEffectSpell(Spell):
+    def cast(self, caster, targets):
+        for target in targets:
+            self.effect.apply_effect(caster, target)
 
 class KineticBlastSpell(AttackSpell, SingleEffectSpell):
     name     = "Kinetic Blast"
