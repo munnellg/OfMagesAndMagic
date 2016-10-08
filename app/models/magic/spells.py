@@ -1,12 +1,22 @@
 import random
 
-class Element:
+##########################################
+#      Spell and Character Elements      #
+##########################################
+
+# Default Element class. Treat as abstract
+class Element(object):
+    # Determine whether or not this element is roughly synonymous
+    # With any other element.
     def is_compatible_with(self, element):
         return element.name in self.compatible
 
+    # Return whether or not we will do extra damage to the input element
     def is_strong_against(self, element):
         return element.name in self.strong
 
+    # Weak against does not mean elements that do extra damage to us
+    # It means elements against which we do poor damage. There is a difference!
     def is_weak_against(self, element):
         return element.name in self.weak
 
@@ -48,6 +58,7 @@ class IceElement(Element):
 class NormalElement(Element):
     name = 'Normal'
     def __init__(self):
+        # Normal element spells can basically be cast by anyone
         self.compatible = [
                             NormalElement.name,
                             IceElement.name,
@@ -61,14 +72,23 @@ class NormalElement(Element):
         self.weak       = []
 
 ##########################################
-#               Recievers                #
+#             Spell Effects              #
 ##########################################
 
-class Effect(Effect):
+class Effect(object):
+    def __init__(self, power):
+        self.power = power
+        return
+
     def apply_effect(self, caster, target):
         raise NotImplementedError
 
 class AttackEffect(Effect):
+    def __init__(self, power, accuracy, element, critical_hit_prob):
+        super(AttackEffect, self).__init__(power)
+        self.accuracy = accuracy
+        self.element = element
+        self.critical_hit_prob = critical_hit_prob
 
     def target_evades(self, caster, target):
         evasion  = target.get_stat_modifier('evasion')
@@ -114,17 +134,22 @@ class AttackEffect(Effect):
         if self.target_evades(caster, target):
             print("{} evades the attack.".format(target.name))
         else:
-            print("Hits {}".format(target.name))
-
             damage = self.compute_damage(caster, target, self.is_critical_hit())
-
             target.take_damage(damage)
 
 class BoostStatEffect(Effect):
+    def __init__(self, stat, power):
+        super(BoostStatEffect, self).__init__(power)
+        self.stat = stat
+
     def apply_effect(self, caster, target):
         target.boost_stat(self.stat, self.power)
 
 class ReduceStatEffect(Effect):
+    def __init__(self, stat, power):
+        super(ReduceStatEffect, self).__init__(power)
+        self.stat = stat
+
     def apply_effect(self, caster, target):
         target.reduce_stat(self.stat, self.power)
 
@@ -132,11 +157,15 @@ class HealingEffect(Effect):
     def apply_effect(self, caster, target):
         target.restore_health(self.power)
 
-class Spell:
+##########################################
+#                 Spells                 #
+##########################################
+
+class Spell(object):
     def __init__(self, effect, element):
         self.effect = effect
         self.element = element
-        
+
     def is_castable_by(self, caster):
         return self.element.is_compatible_with(caster.element)
 
@@ -150,7 +179,7 @@ class GroupEffectSpell(Spell):
         for target in targets:
             self.effect.apply_effect(caster, target)
 
-class KineticBlastSpell(AttackSpell, SingleEffectSpell):
+class KineticBlastSpell(Spell):
     name     = "Kinetic Blast"
     element  = NormalElement()
 
@@ -158,7 +187,20 @@ class KineticBlastSpell(AttackSpell, SingleEffectSpell):
     accuracy          = 100
     critical_hit_prob = 8
 
-class FireballSpell(AttackSpell, SingleEffectSpell):
+    def __init__(self):
+        effect = AttackEffect(
+            KineticBlastSpell.power,
+            KineticBlastSpell.accuracy,
+            KineticBlastSpell.element,
+            KineticBlastSpell.critical_hit_prob
+        )
+
+        super(KineticBlastSpell, self).__init__(
+            effect,
+            KineticBlastSpell.element
+        )
+
+class FireballSpell(Spell):
     name    = "Fireball"
     element = FireElement()
 
@@ -166,7 +208,20 @@ class FireballSpell(AttackSpell, SingleEffectSpell):
     accuracy          = 100
     critical_hit_prob = 8
 
-class FlameWaveSpell(AttackSpell, GroupEffectSpell):
+    def __init__(self):
+        effect = AttackEffect(
+            FireballSpell.power,
+            FireballSpell.accuracy,
+            FireballSpell.element,
+            FireballSpell.critical_hit_prob
+        )
+
+        super(FireballSpell, self).__init__(
+            effect,
+            FireballSpell.element
+        )
+
+class FlameWaveSpell(GroupEffectSpell):
     name    = "Flame Wave"
     element = FireElement()
 
@@ -174,7 +229,20 @@ class FlameWaveSpell(AttackSpell, GroupEffectSpell):
     accuracy          = 100
     critical_hit_prob = 8
 
-class IceBreakerSpell(AttackSpell, SingleEffectSpell):
+    def __init__(self):
+        effect = AttackEffect(
+            FlameWaveSpell.power,
+            FlameWaveSpell.accuracy,
+            FlameWaveSpell.element,
+            FlameWaveSpell.critical_hit_prob
+        )
+
+        super(FlameWaveSpell, self).__init__(
+            effect,
+            FlameWaveSpell.element
+        )
+
+class IceBreakerSpell(Spell):
     name    = "Ice Breaker"
     element = IceElement()
 
@@ -182,7 +250,20 @@ class IceBreakerSpell(AttackSpell, SingleEffectSpell):
     accuracy          = 100
     critical_hit_prob = 8
 
-class WaterJetSpell(AttackSpell, SingleEffectSpell):
+    def __init__(self):
+        effect = AttackEffect(
+            IceBreakerSpell.power,
+            IceBreakerSpell.accuracy,
+            IceBreakerSpell.element,
+            IceBreakerSpell.critical_hit_prob
+        )
+
+        super(IceBreakerSpell, self).__init__(
+            effect,
+            IceBreakerSpell.element
+        )
+
+class WaterJetSpell(Spell):
     name    = "Water Jet"
     element = WaterElement()
 
@@ -190,7 +271,20 @@ class WaterJetSpell(AttackSpell, SingleEffectSpell):
     accuracy          = 100
     critical_hit_prob = 8
 
-class GlacierSpell(AttackSpell, GroupEffectSpell):
+    def __init__(self):
+        effect = AttackEffect(
+            WaterJetSpell.power,
+            WaterJetSpell.accuracy,
+            WaterJetSpell.element,
+            WaterJetSpell.critical_hit_prob
+        )
+
+        super(WaterJetSpell, self).__init__(
+            effect,
+            WaterJetSpell.element
+        )
+
+class GlacierSpell(GroupEffectSpell):
     name    = "Glacier"
     element = IceElement()
 
@@ -198,7 +292,20 @@ class GlacierSpell(AttackSpell, GroupEffectSpell):
     accuracy          = 100
     critical_hit_prob = 8
 
-class TidalWaveSpell(AttackSpell, GroupEffectSpell):
+    def __init__(self):
+        effect = AttackEffect(
+            GlacierSpell.power,
+            GlacierSpell.accuracy,
+            GlacierSpell.element,
+            GlacierSpell.critical_hit_prob
+        )
+
+        super(GlacierSpell, self).__init__(
+            effect,
+            GlacierSpell.element
+        )
+
+class TidalWaveSpell(GroupEffectSpell):
     name    = "Tidal Wave"
     element = WaterElement()
 
@@ -206,66 +313,176 @@ class TidalWaveSpell(AttackSpell, GroupEffectSpell):
     accuracy          = 100
     critical_hit_prob = 8
 
-class FlashBangSpell(StatSpell, SingleEffectSpell):
+    def __init__(self):
+        effect = AttackEffect(
+            TidalWaveSpell.power,
+            TidalWaveSpell.accuracy,
+            TidalWaveSpell.element,
+            TidalWaveSpell.critical_hit_prob
+        )
+
+        super(TidalWaveSpell, self).__init__(
+            effect,
+            TidalWaveSpell.element
+        )
+
+class FlashBangSpell(Spell):
     name = "Flashbang"
     element = LightElement()
 
     power = 1
     stat  = 'accuracy'
 
-class HealingLightSpell(HealingSpell, SingleEffectSpell):
+    def __init__(self):
+        effect = ReduceStatEffect(
+            FlashBangSpell.power,
+            FlashBangSpell.stat
+        )
+
+        super(FlashBangSpell, self).__init__(
+            effect,
+            FlashBangSpell.element
+        )
+
+class HealingLightSpell(Spell):
     name = "Healing Light"
     element = LightElement()
 
     power = 25
 
-class HealingWaveSpell(HealingSpell, GroupEffectSpell):
+    def __init__(self):
+        effect = HealingEffect(
+            HealingLightSpell.power
+        )
+
+        super(HealingLightSpell, self).__init__(
+            effect,
+            HealingLightSpell.element
+        )
+
+class HealingWaveSpell(GroupEffectSpell):
     name = "Healing Wave"
     element = LightElement()
 
     power = 10
 
-class EagleEyesSpell(BoostStatSpell, SingleEffectSpell):
+    def __init__(self):
+        effect = HealingEffect(
+            HealingWaveSpell.power
+        )
+
+        super(HealingWaveSpell, self).__init__(
+            effect,
+            HealingWaveSpell.element
+        )
+
+class EagleEyesSpell(Spell):
     name = "Eagle Eyes"
     element = LightElement()
 
     power = 1
     stat  = 'accuracy'
 
-class FleetFeetSpell(BoostStatSpell, SingleEffectSpell):
+    def __init__(self):
+        effect = BoostStatEffect(
+            EagleEyesSpell.power,
+            EagleEyesSpell.stat
+        )
+
+        super(EagleEyesSpell, self).__init__(
+            effect,
+            EagleEyesSpell.element
+        )
+
+class FleetFeetSpell(Spell):
     name = "Fleet Feet"
     element = LightElement()
 
     power = 1
     stat  = 'evasion'
 
-class SludgePuddleSpell(ReduceStatSpell, SingleEffectSpell):
+    def __init__(self):
+        effect = BoostStatEffect(
+            FleetFeetSpell.power,
+            FleetFeetSpell.stat
+        )
+
+        super(FleetFeetSpell, self).__init__(
+            effect,
+            FleetFeetSpell.element
+        )
+
+class SludgePuddleSpell(Spell):
     name = "Sludge Puddle"
     element = DarkElement()
 
     power = 1
     stat  = 'evasion'
 
-class DisorientingMistSpell(ReduceStatSpell, SingleEffectSpell):
+    def __init__(self):
+        effect = ReduceStatEffect(
+            SludgePuddleSpell.power,
+            SludgePuddleSpell.stat
+        )
+
+        super(SludgePuddleSpell, self).__init__(
+            effect,
+            SludgePuddleSpell.element
+        )
+
+class DisorientingMistSpell(Spell):
     name = "Disorienting Mist"
     element = DarkElement()
 
     power = 1
     stat  = 'accuracy'
 
-class WitheringGlanceSpell(ReduceStatSpell, SingleEffectSpell):
+    def __init__(self):
+        effect = ReduceStatEffect(
+            DisorientingMistSpell.power,
+            DisorientingMistSpell.stat
+        )
+
+        super(DisorientingMistSpell, self).__init__(
+            effect,
+            DisorientingMistSpell.element
+        )
+
+class WitheringGlanceSpell(Spell):
     name = "Withering Glance"
     element = DarkElement()
 
     power = 1
     stat  = 'attack'
 
-class FracturedArmourSpell(ReduceStatSpell, SingleEffectSpell):
+    def __init__(self):
+        effect = ReduceStatEffect(
+            WitheringGlanceSpell.power,
+            WitheringGlanceSpell.stat
+        )
+
+        super(WitheringGlanceSpell, self).__init__(
+            effect,
+            WitheringGlanceSpell.element
+        )
+
+class FracturedArmourSpell(Spell):
     name = "Fractured Armour"
     element = DarkElement()
 
     power = 1
     stat  = 'defense'
+
+    def __init__(self):
+        effect = ReduceStatEffect(
+            FracturedArmourSpell.power,
+            FracturedArmourSpell.stat
+        )
+
+        super(FracturedArmourSpell, self).__init__(
+            effect,
+            FracturedArmourSpell.element
+        )
 
 ##########################################
 #                Commands                #

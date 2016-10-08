@@ -42,7 +42,7 @@ class FighterStatus:
 
             flattened_allies = self.flatten_fighters(allies)
             flattened_enemies = self.flatten_fighters(enemies)
-            print()
+            print("")
 
         def restore_health(self, amount):
             delta = min(amount, self.parent.max_hp - self.parent.cur_hp)

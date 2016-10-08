@@ -44,7 +44,8 @@ class Battle:
     def __init__(self, team1, team2):
         self.team1 = Team(team1)
         self.team2 = Team(team2)
-        self.cur_round = BattleRound(self.team1, self.team2)
+        self.cur_round = None
+        self.round_counter = 0
 
         self.cur_state = 'in_battle'
         self.states = {
@@ -52,6 +53,29 @@ class Battle:
             'battle_over' : Battle.__BattleOver
         }
         self.state = self.states[self.cur_state](self)
+
+        print("Starting Battle!")
+        print("Team 1")
+        for fighter in team1:
+            print("{:>10} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3}".format(
+                fighter.name,
+                fighter.hp,
+                fighter.attack,
+                fighter.defense,
+                fighter.speed)
+            )
+        print("")
+        print("Team 2")
+        for fighter in team2:
+            print("{:>10} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3}".format(
+                fighter.name,
+                fighter.hp,
+                fighter.attack,
+                fighter.defense,
+                fighter.speed)
+            )
+        print("")
+        self.start_new_round()
 
     def update(self):
         self.state.update()

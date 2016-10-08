@@ -14,4 +14,4 @@ class Walton:
 
         print("Team {} won".format(self.battle.get_winner() + 1))
         for i in range(len(self.league[0])):
-            print(self.league[0][i].name, self.league[0][i].hp, "|", self.league[1][i].name, self.league[1][i].hp)
+            print("{} {} | {} {}".format(self.league[0][i].name, self.league[0][i].hp, self.league[1][i].name, self.league[1][i].hp))
