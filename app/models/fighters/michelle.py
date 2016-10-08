@@ -11,6 +11,7 @@ class Fighter:
         self.moves = [
             "Glacier"
         ]
+
     def make_move(self, allies, enemies):
         return ("Glacier", enemies)
 

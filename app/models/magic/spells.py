@@ -146,7 +146,7 @@ class BoostStatEffect(Effect):
         target.boost_stat(self.stat, self.power)
 
 class ReduceStatEffect(Effect):
-    def __init__(self, stat, power):
+    def __init__(self, power, stat):
         super(ReduceStatEffect, self).__init__(power)
         self.stat = stat
 

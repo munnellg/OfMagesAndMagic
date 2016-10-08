@@ -54,27 +54,6 @@ class Battle:
         }
         self.state = self.states[self.cur_state](self)
 
-        print("Starting Battle!")
-        print("Team 1")
-        for fighter in team1:
-            print("{:>10} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3}".format(
-                fighter.name,
-                fighter.hp,
-                fighter.attack,
-                fighter.defense,
-                fighter.speed)
-            )
-        print("")
-        print("Team 2")
-        for fighter in team2:
-            print("{:>10} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3}".format(
-                fighter.name,
-                fighter.hp,
-                fighter.attack,
-                fighter.defense,
-                fighter.speed)
-            )
-        print("")
         self.start_new_round()
 
     def update(self):
@@ -106,5 +85,15 @@ class Battle:
 
         if self.team1.is_defeated():
             return 1
-
         return -1
+
+    def __str__(self):
+        text = "Team 1\n"
+        for fighter in self.team1:
+            text += str(fighter) + "\n"
+        text += "\n"
+
+        text += "Team2\n"
+        for fighter in self.team2:
+            text += str(fighter) + "\n"        
+        return text

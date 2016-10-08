@@ -192,4 +192,10 @@ class FighterStatus:
         return self.fighter
 
     def __str__(self):
-        return "{} {} {}".format(self.name, self.element.name, self.cur_hp)
+        return "{:>10} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3}".format(
+                self.name,
+                self.cur_hp,
+                self.get_stat("attack"),
+                self.get_stat("defense"),
+                self.get_stat("speed")
+            )

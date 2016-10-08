@@ -8,10 +8,11 @@ class Walton:
         self.battle = Battle(self.league[0], self.league[1])
 
     def run(self):
+        print("Starting Battle!")
+        print(self.battle)
 
         while self.battle.is_in_battle():
             self.battle.update()
 
         print("Team {} won".format(self.battle.get_winner() + 1))
-        for i in range(len(self.league[0])):
-            print("{} {} | {} {}".format(self.league[0][i].name, self.league[0][i].hp, self.league[1][i].name, self.league[1][i].hp))
+        print(self.battle)
