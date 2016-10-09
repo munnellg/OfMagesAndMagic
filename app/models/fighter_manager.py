@@ -1,6 +1,6 @@
 from app.models.magic import spells
 
-class FighterStatus:
+class FighterManager:
     class __StateConscious:
         def __init__(self, parent):
             self.parent = parent
@@ -15,9 +15,9 @@ class FighterStatus:
         def unflatten(self, fighter, flattened1, flattened2, unflattened1, unflattened2):
             if isinstance(fighter, list):
                 if fighter == flattened1:
-                    return unflattened1.team_status
+                    return unflattened1
                 if fighter == flattened2:
-                    return unflattened2.team_status
+                    return unflattened2
             else:
                 for i in range(len(flattened1)):
                     if fighter == flattened1[i]:
@@ -126,8 +126,8 @@ class FighterStatus:
         }
 
         self.states = {
-            "conscious" : FighterStatus.__StateConscious,
-            "fainted"   : FighterStatus.__StateFainted,
+            "conscious" : FighterManager.__StateConscious,
+            "fainted"   : FighterManager.__StateFainted,
         }
 
         self.set_state('conscious')

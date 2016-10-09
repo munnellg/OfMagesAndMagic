@@ -42,8 +42,9 @@ class Battle:
             return
 
     def __init__(self, team1, team2):
-        self.team1 = Team(team1)
-        self.team2 = Team(team2)
+        self.team1 = Team("Team 1", team1)
+        self.team2 = Team("Team 2", team2)
+
         self.cur_round = None
         self.round_counter = 0
 
@@ -88,12 +89,7 @@ class Battle:
         return -1
 
     def __str__(self):
-        text = "Team 1\n"
-        for fighter in self.team1:
-            text += str(fighter) + "\n"
-        text += "\n"
+        text = str(self.team1)
+        text += str(self.team2)
 
-        text += "Team2\n"
-        for fighter in self.team2:
-            text += str(fighter) + "\n"        
         return text
