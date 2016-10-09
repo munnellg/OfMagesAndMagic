@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<magic>
+    <elements>
+        <element name="Normal">
+            <compatible>
+                <element>Normal</element>
+                <element>Fire</element>
+                <element>Ice</element>
+                <element>Water</element>
+                <element>Light</element>
+                <element>Dark</element>
+            </compatible>
+        </element>
+        <element name="Fire">
+            <strong>                
+                <element>Ice</element>
+            </strong>
+            <weak>
+                <element>Fire</element>
+                <element>Water</element>
+            </weak>
+        </element>
+        <element name="Ice">
+            <strong>                
+                <element>Water</element>
+            </strong>
+            <weak>
+                <element>Fire</element>
+                <element>Ice</element>
+            </weak>
+        </element>
+        <element name="Water">
+            <strong>                
+                <element>Fire</element>
+            </strong>
+            <weak>
+                <element>Water</element>
+                <element>Ice</element>
+            </weak>            
+        </element>
+        <element name="Light" />        
+        <element name="Dark" />
+    </elements>
+    <spells>
+        <!-- Normal spells -->
+        <spell name="Kinetic Blast" type="single">
+            <effect type="attack" power="40" accuracy="100" critical_hit_prob="8"/>
+            <element>Normal</element>
+        </spell>
+
+        <!-- Fire spells -->
+        <spell name="Fireball" type="single">
+            <effect type="attack" power="50" accuracy="100" critical_hit_prob="8"/>
+            <element>Fire</element>
+        </spell>
+        <spell name="Flame Wave" type="group">
+            <effect type="attack" power="20" critical_hit_prob="8" accuracy="100"/>
+            <element>Fire</element>
+        </spell>
+
+        <!-- Ice spells -->
+        <spell name="Ice Breaker" type="single">
+            <effect type="attack" power="50" accuracy="100" critical_hit_prob="8"/>
+            <element>Ice</element>
+        </spell>
+        <spell name="Glacier" type="group">
+            <effect type="attack" power="20" accuracy="100" critical_hit_prob="8"/>
+            <element>Ice</element>
+        </spell>
+
+        <!-- Water spells -->
+        <spell name="Water Jet" type="single">
+            <effect type="attack" power="50" accuracy="100" critical_hit_prob="8"/>
+            <element>Water</element>
+        </spell>
+        <spell name="Tidal Wave" type="group">
+            <effect type="attack" power="20" accuracy="100" critical_hit_prob="8"/>
+            <element>Water</element>
+        </spell>
+
+        <!-- Light spells -->
+        <spell name="Healing Light" type="single">
+            <effect type="heal" power="25"/>
+            <element>Light</element>
+        </spell>
+        <spell name="Healing Wave" type="group">
+            <effect type="heal" power="10"/>
+            <element>Light</element>
+        </spell>
+        <spell name="Eagle Eyes" type="single">
+            <effect type="stat_boost" power="1" stat='accuracy'/>
+            <element>Light</element>
+        </spell>
+        <spell name="Fleet Feet" type="single">
+            <effect type="stat_boost" power="1" stat='evasion'/>
+            <element>Light</element>
+        </spell>       
+
+        <!-- Dark spells -->
+        <spell name="Sludge Puddle" type="single">
+            <effect type="stat_reduce" power="1" stat='evasion'/>
+            <element>Dark</element>
+        </spell>
+        <spell name="Withering Glance" type="single">
+            <effect type="stat_reduce" power="1" stat='attack'/>
+            <element>Dark</element>
+        </spell>
+        <spell name="Fractured Armour" type="single">
+            <effect type="stat_reduce" power="1" stat='defense'/>
+            <element>Dark</element>
+        </spell>
+    </spells>
+</magic>

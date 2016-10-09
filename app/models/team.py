@@ -22,6 +22,5 @@ class Team(list):
     	text = self.team_name + "\n"
 
         for fighter in self:
-            text += str(fighter) + "\n"
-        text += "\n"
+            text += str(fighter) + "\n"        
         return text

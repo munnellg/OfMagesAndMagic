@@ -1,10 +1,10 @@
-from app.models.magic import spells
+from app.models import magic
 
 class FighterManager:
     class __StateConscious:
         def __init__(self, parent):
             self.parent = parent
-            self.spellbook = spells.SpellBook()
+            self.spellbook = magic.SpellBook()
 
         def cast_spell(self, spell, target):
             self.spellbook.cast_spell(spell, self.parent, target)
@@ -102,7 +102,7 @@ class FighterManager:
         self.modifier_minmax = 6
 
         self.name    = fighter.name
-        self.element = spells.SpellBook.get_element_object(self.fighter.element)
+        self.element = magic.SpellBook.get_element_object(self.fighter.element)
 
         self.max_hp = fighter.hp
         self.cur_hp = fighter.hp
@@ -192,10 +192,12 @@ class FighterManager:
         return self.fighter
 
     def __str__(self):
-        return "{:>10} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3}".format(
+        return "{:>10} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3} | ACC: {:>3} | EVA: {:>3}".format(
                 self.name,
                 self.cur_hp,
                 self.get_stat("attack"),
                 self.get_stat("defense"),
-                self.get_stat("speed")
+                self.get_stat("speed"),
+                self.get_stat_modifier("evasion"),
+                self.get_stat_modifier("accuracy")
             )

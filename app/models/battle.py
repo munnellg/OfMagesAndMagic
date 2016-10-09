@@ -90,6 +90,7 @@ class Battle:
 
     def __str__(self):
         text = str(self.team1)
+        text += '\n'
         text += str(self.team2)
 
         return text
