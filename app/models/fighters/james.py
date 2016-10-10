@@ -1,13 +1,13 @@
 class Fighter:
     def __init__(self):
         self.name  = "James"
-        self.max_hp = 60
-        self.hp = self.max_hp
+        self.max_hp = 60        
         self.attack = 14
         self.defense = 13
         self.speed = 13
         self.element = "Ice"
 
+        self.hp = self.max_hp
         self.moves = [
             "Kinetic Blast",
             "Ice Breaker",

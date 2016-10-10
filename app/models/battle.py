@@ -9,19 +9,23 @@ class Move:
         self.rank = self.fighter.get_stat('speed')
 
     def execute(self):
-        self.fighter.make_move(self.ally_team, self.enemy_team)
+        self.fighter.make_move(self.ally_team, self.enemy_team)        
+        print("")      
 
 class BattleRound:
     def __init__(self, team1, team2):
-        self.move_order = [Move(fighter, team1, team2) for fighter in team1]
-        self.move_order += [Move(fighter, team2, team1) for fighter in team2]
+        self.move_order = [Move(fighter, team1, team2) for fighter in team1 if fighter.is_conscious()]
+        self.move_order += [Move(fighter, team2, team1) for fighter in team2 if fighter.is_conscious()]
         self.move_order.sort(key=lambda move: -move.rank)
 
         self.cur_move = 0
 
     def next_move(self):
         self.move_order[self.cur_move].execute()
-        self.cur_move += 1
+        self.cur_move += 1        
+        while self.cur_move < len(self.move_order) and not self.move_order[self.cur_move].fighter.is_conscious():            
+            self.cur_move += 1
+        
         return self.cur_move >= len(self.move_order)
 
 class Battle:

@@ -110,5 +110,9 @@
             <effect type="stat_reduce" power="1" stat='defense'/>
             <element>Dark</element>
         </spell>
+         <spell name="Disorienting Mist" type="single">
+            <effect type="stat_reduce" power="1" stat='accuracy'/>
+            <element>Dark</element>
+        </spell>
     </spells>
 </magic>

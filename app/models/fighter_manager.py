@@ -1,113 +1,21 @@
 from app.models import magic
+import time
 
 class FighterManager:
-    class __StateConscious:
-        def __init__(self, parent):
-            self.parent = parent
-            self.spellbook = magic.SpellBook()
-
-        def cast_spell(self, spell, target):
-            self.spellbook.cast_spell(spell, self.parent, target)
-
-        def flatten_fighters(self, fighters):
-            return [status.get_updated_fighter() for status in fighters]
-
-        def unflatten(self, fighter, flattened1, flattened2, unflattened1, unflattened2):
-            if isinstance(fighter, list):
-                if fighter == flattened1:
-                    return unflattened1
-                if fighter == flattened2:
-                    return unflattened2
-            else:
-                for i in range(len(flattened1)):
-                    if fighter == flattened1[i]:
-                        return unflattened1[i]
-
-                for j in range(len(flattened2)):
-                    if fighter == flattened2[j]:
-                        return unflattened2[j]
-            print("Unable to find reference")
-
-        def make_move(self, allies, enemies):
-            print("{} is planning a move".format(self.parent.name))
-            flattened_allies = self.flatten_fighters(allies)
-            flattened_enemies = self.flatten_fighters(enemies)
-
-            decision = self.parent.fighter.make_move(flattened_allies, flattened_enemies)
-            target = self.unflatten(decision[1], flattened_enemies, flattened_allies, enemies, allies)
-            if decision[0] not in self.parent.moves:
-                print("{} does not know {}".format(self.parent.name, decision[0]))
-            else:
-                self.cast_spell(decision[0], target)
-
-            flattened_allies = self.flatten_fighters(allies)
-            flattened_enemies = self.flatten_fighters(enemies)
-            print("")
-
-        def restore_health(self, amount):
-            delta = min(amount, self.parent.max_hp - self.parent.cur_hp)
-            print("{} regained {} HP".format(self.parent.name, delta))
-            self.parent.cur_hp += delta
-
-        def take_damage(self, damage):
-            delta = min(damage, self.parent.cur_hp)
-            print("{} lost {} HP".format(self.parent.name, delta))
-            self.parent.cur_hp -= delta
-            if self.parent.cur_hp == 0:
-                print("{} fainted".format(self.parent.name))
-                self.parent.set_state('fainted')
-
-        def boost_stat(self, stat, amount):
-            delta = min(amount, self.parent.modifier_minmax - self.parent.stat_modifiers[stat])
-            if delta == 0:
-                print("{}'s {} stat can't go any higher".format(self.parent.name, stat))
-            else:
-                print("{}'s {} {}rose".format(self.parent.name, stat, "sharply " if delta > 1 else ""))
-                self.parent.stat_modifiers[stat] += delta
-
-        def reduce_stat(self, stat, amount):
-            delta = min(amount, self.parent.stat_modifiers[stat] + self.parent.modifier_minmax )
-            if delta == 0:
-                print("{}'s {} stat can't go any lower".format(self.parent.name, stat))
-            else:
-                print("{}'s {} {}fell".format(self.parent.name, stat, "sharply " if delta > 1 else ""))
-                self.parent.stat_modifiers[stat] -= delta
-
-    class __StateFainted:
-        def __init__(self, parent):
-            self.parent = parent
-            self.name = self.parent.name
-
-        def cast_spell(self, spell, target):
-            print("{} has fainted and can't cast spells".format(self.name))
-
-        def make_move(self, allies, enemies):
-            return
-            print("{} has fainted and can't make a move".format(self.name))
-
-        def restore_health(self, amount):
-            print("{} has fainted and can't be restored".format(self.name))
-
-        def take_damage(self, damage):
-            print("{} has fainted and can't take more damage".format(self.name))
-
-        def reduce_stat(self, stat, amount):
-            print("Spell has no effect on {}".format(self.parent.name))
-
-        def boost_stat(self, stat, amount):
-            print("Spell has no effect on {}".format(self.parent.name))
-
+    
     def __init__(self, fighter):
         self.fighter = fighter
         self.modifier_minmax = 6
 
         self.name    = fighter.name
         self.element = magic.SpellBook.get_element_object(self.fighter.element)
+        self.spellbook = magic.SpellBook()
 
         self.max_hp = fighter.hp
         self.cur_hp = fighter.hp
 
         self.moves = fighter.moves
+
         if len(self.moves) > 4:
             self.moves = self.moves[:4]
 
@@ -125,16 +33,11 @@ class FighterManager:
             'accuracy'   : 0
         }
 
-        self.states = {
-            "conscious" : FighterManager.__StateConscious,
-            "fainted"   : FighterManager.__StateFainted,
-        }
-
-        self.set_state('conscious')
-
+    # Returns requested stat without any stat modifiers being applied
     def get_base_stat(self, stat):
         return self.base_stats[stat]
 
+    # Returns requested stat modifier without the base stat
     def get_stat_modifier(self, stat):
         return self.stat_modifiers[stat]
 
@@ -149,52 +52,122 @@ class FighterManager:
         # Return modified stat (rounded down)
         return int(self.base_stats[stat] * modifier)
 
-    def reset_fighter(self):
-        # Reset fighter's hit points
-        self.fighter.hp = self.max_hp
+    # Use Fighter attribute to plan and execute a move
+    def make_move(self, allies, enemies):
+        # Make sure we can make a move to begin with
+        if not self.is_conscious():
+            print("{} has fainted and cannot make a move".format(self.name))            
+            return
 
-        # Reset fighter stats
-        self.fighter.attack = self.base_stats['attack']
-        self.fighter.defense = self.base_stats['defense']
-        self.fighter.speed = self.base_stats['speed']
+        print("{} is planning a move".format(self.name))
 
-        # Reset stat modifiers
-        for key in self.stat_modifiers:
-            self.stat_modifiers[key] = 0
+        # Flatten fighter managers for the simple AI functions
+        flattened_allies = [fighter.flatten() for fighter in allies]
+        flattened_enemies = [fighter.flatten() for fighter in enemies]
 
-    def set_state(self, state_code):
-        self.cur_state_code = state_code
-        self.state = self.states[state_code](self)
+        # Get the AI to make a choice
+        decision = self.fighter.make_move(flattened_allies, flattened_enemies)
+
+        # Test to ensure that the AI returned a tuple (valid choice)
+        if type(decision) is not tuple:            
+            print("{} does nothing".format(self.name))            
+            return
+        
+        # Make sure the AI chose a valid move
+        if decision[0] not in self.moves:
+            print("{} does not know {}".format(self.name, decision[0]))            
+            return
+        
+        # Uplift the target to one of the FighterManager objects.
+        # Don't want to work with raw Fighter object lest cheating happen
+        if decision[1] == flattened_allies:
+            # Targeted all/random allies
+            target = allies
+        elif decision[1] == flattened_enemies:
+            # Targeted all/random enemies
+            target = enemies
+        else:                                   
+            # Last case, targeted specific fighter. Find out who
+            # Search allies and enemies for target
+            target = [t for t in allies+enemies if t.fighter==decision[1]]
+
+            # If we find one, great!
+            if len(target) > 0:
+                target = target[0]
+            else:                
+                # Invalid target! Don't do anything
+                print("Invalid target")
+                print("")
+                return
+        
+        # Cast the spell!
+        self.cast_spell(decision[0], target) 
 
     def cast_spell(self, spell, target):
-        self.state.cast_spell(spell, target)
-
-    def make_move(self, allies, enemies):
-        self.state.make_move(allies, enemies)
-
+        self.spellbook.cast_spell(spell, self, target)
+        
     def restore_health(self, amount):
-        self.state.restore_health(amount)
+        if not self.is_conscious():
+            print("{} has fainted and cannot have health restored".format(self.name))
+            return    
+
+        delta = min(amount, self.max_hp - self.cur_hp)        
+        self.cur_hp += delta
+
+        print("{} regained {} HP".format(self.name, delta))
 
     def take_damage(self, damage):
-        self.state.take_damage(damage)
+        if not self.is_conscious():
+            print("{} has fainted and cannot take more damage".format(self.name))
+            return
 
-    def reduce_stat(self, stat, amount):
-        self.state.reduce_stat(stat, amount)
+        delta = min(damage, self.cur_hp)
+        self.cur_hp -= delta
+
+        print("{} lost {} HP".format(self.name, delta))                
+        
+        if self.cur_hp == 0:
+            print("{} fainted".format(self.name))
 
     def boost_stat(self, stat, amount):
-        self.state.boost_stat(stat, amount)
+        if not self.is_conscious():
+            print("{} has fainted and is not affected".format(self.name))
+            return
 
-    def get_updated_fighter(self):
+        delta = min(amount, self.modifier_minmax - self.stat_modifiers[stat])
+        if delta == 0:
+            print("{}'s {} stat can't go any higher".format(self.name, stat))
+        else:
+            print("{}'s {} {}rose".format(self.name, stat, "sharply " if delta > 1 else ""))
+            self.stat_modifiers[stat] += delta
+
+    def reduce_stat(self, stat, amount):
+        if not self.is_conscious():
+            print("{} has fainted and is not affected".format(self.name))
+            return
+
+        delta = min(amount, self.stat_modifiers[stat] + self.modifier_minmax )
+        if delta == 0:
+            print("{}'s {} stat can't go any lower".format(self.name, stat))
+        else:
+            print("{}'s {} {}fell".format(self.name, stat, "sharply " if delta > 1 else ""))
+            self.stat_modifiers[stat] -= delta
+
+    def flatten(self):
         self.fighter.hp      = self.cur_hp
         self.fighter.attack  = self.get_stat('attack')
         self.fighter.defense = self.get_stat('defense')
         self.fighter.speed   = self.get_stat('speed')
         return self.fighter
 
+    def is_conscious(self):
+        return self.cur_hp > 0
+
     def __str__(self):
-        return "{:>10} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3} | ACC: {:>3} | EVA: {:>3}".format(
+        return "{:>10} - {:>5} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3} | ACC: {:>3} | EVA: {:>3}".format(
                 self.name,
-                self.cur_hp,
+                self.element.name,
+                self.cur_hp,                
                 self.get_stat("attack"),
                 self.get_stat("defense"),
                 self.get_stat("speed"),

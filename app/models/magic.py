@@ -179,7 +179,7 @@ class SpellBook:
         'group'  : GroupSpell,
         'single' : Spell
     }
-    
+
     effect_constructors = {
         'attack'      : AttackEffect,
         'stat_boost'  : BoostStatEffect,
@@ -244,8 +244,7 @@ class SpellBook:
 
             # Load the effects that the spell has
             effects = []
-            for effect in spell.findall('effect'):
-                print(effect.attrib)
+            for effect in spell.findall('effect'):                
                 # Get the effect's type and remove that entry from the dictionary
                 effect_type = effect.attrib.pop('type', None)
 

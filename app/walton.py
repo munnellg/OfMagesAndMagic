@@ -1,4 +1,4 @@
-from random import shuffle
+import time
 from app.models.magic import SpellBook
 from app.models.league import build_league
 from app.models.battle import Battle
@@ -16,6 +16,7 @@ class Walton:
 
         while self.battle.is_in_battle():
             self.battle.update()
-
+            print(self.battle)
+            
         print("Team {} won".format(self.battle.get_winner() + 1))
         print(self.battle)
