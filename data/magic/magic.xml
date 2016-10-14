@@ -2,45 +2,71 @@
 
 <magic>
     <elements>
-        <element name="Normal">
-            <compatible>
-                <element>Normal</element>
-                <element>Fire</element>
-                <element>Ice</element>
-                <element>Water</element>
-                <element>Light</element>
-                <element>Dark</element>
-            </compatible>
-        </element>
+      <element name="Normal">
+          <compatible>
+              <element>Normal</element>
+              <element>Fire</element>
+              <element>Ice</element>
+              <element>Water</element>
+              <element>Thunder</element>
+              <element>Earth</element>
+          </compatible>
+      </element>
         <element name="Fire">
             <strong>
                 <element>Ice</element>
+								<element>Thunder</element>
             </strong>
             <weak>
                 <element>Fire</element>
                 <element>Water</element>
+								<element>Earth</element>
             </weak>
         </element>
         <element name="Ice">
             <strong>
                 <element>Water</element>
+								<element>Earth</element>
             </strong>
             <weak>
-                <element>Fire</element>
                 <element>Ice</element>
+                <element>Fire</element>
+								<element>Thunder</element>
             </weak>
         </element>
         <element name="Water">
             <strong>
                 <element>Fire</element>
+								<element>Earth</element>
             </strong>
             <weak>
                 <element>Water</element>
                 <element>Ice</element>
+								<element>Thunder</element>
             </weak>
         </element>
-        <element name="Light" />
-        <element name="Dark" />
+				<element name="Thunder">
+					<strong>
+						<element>Ice</element>
+						<element>Water</element>
+					</strong>
+					<weak>
+						<element>Thunder</element>
+						<element>Earth</element>
+						<element>Fire</element>
+					</weak>
+				</element>
+				<element name="Earth">
+					<strong>
+						<element>Fire</element>
+						<element>Thunder</element>
+					</strong>
+					<weak>
+						<element>Earth</element>
+						<element>Water</element>
+						<element>Ice</element>
+					</weak>
+				</element>
     </elements>
     <spells>
         <!-- Normal spells -->
@@ -79,40 +105,24 @@
             <element>Water</element>
         </spell>
 
-        <!-- Light spells -->
-        <spell name="Healing Light" type="single">
-            <effect type="heal" power="25"/>
-            <element>Light</element>
+        <!-- Thunder Spells -->
+        <spell name="Jolt" type="single">
+            <effect type="attack" power="50" accuracy="100" critical_hit_prob="8"/>
+            <element>Thunder</element>
         </spell>
-        <spell name="Healing Wave" type="group">
-            <effect type="heal" power="10"/>
-            <element>Light</element>
-        </spell>
-        <spell name="Eagle Eyes" type="single">
-            <effect type="stat_boost" power="1" stat='speed'/>
-            <element>Light</element>
-        </spell>
-        <spell name="Fleet Feet" type="single">
-            <effect type="stat_boost" power="1" stat='speed'/>
-            <element>Light</element>
+        <spell name="Storm" type="group">
+            <effect type="attack" power="20" accuracy="100" critical_hit_prob="8"/>
+            <element>Thunder</element>
         </spell>
 
-        <!-- Dark spells -->
-        <spell name="Sludge Puddle" type="single">
-            <effect type="stat_reduce" power="1" stat='speed'/>
-            <element>Dark</element>
+        <!-- Earth Spells -->
+        <spell name="Rock Smash" type="single">
+            <effect type="attack" power="50" accuracy="100" critical_hit_prob="8"/>
+            <element>Earth</element>
         </spell>
-        <spell name="Withering Glance" type="single">
-            <effect type="stat_reduce" power="1" stat='attack'/>
-            <element>Dark</element>
-        </spell>
-        <spell name="Fractured Armour" type="single">
-            <effect type="stat_reduce" power="1" stat='defense'/>
-            <element>Dark</element>
-        </spell>
-         <spell name="Disorienting Mist" type="single">
-            <effect type="stat_reduce" power="1" stat='speed'/>
-            <element>Dark</element>
+        <spell name="Landslide" type="group">
+            <effect type="attack" power="20" accuracy="100" critical_hit_prob="8"/>
+            <element>Earth</element>
         </spell>
     </spells>
 </magic>

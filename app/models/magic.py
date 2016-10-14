@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 ##########################################
 # Default Element class.
 class Element(object):
+    # Initialize a new element object
     def __init__(self, name, strong, weak, compatible):
         self.name = name
         self.strong = strong
@@ -30,6 +31,8 @@ class Element(object):
 #             Spell Effects              #
 ##########################################
 
+# How a particular spell will affect a targeted enemy
+# Stats targeted, additional modifiers, etc.
 class Effect(object):
     def __init__(self, element, power):
         self.power = power
@@ -38,20 +41,28 @@ class Effect(object):
     def apply_effect(self, caster, target):
         raise NotImplementedError
 
+# A spell which reduces the targets health. Damage is a function of
+# attack power, caster power, target defense and some random variables
 class AttackEffect(Effect):
     def __init__(self, element, power, accuracy, critical_hit_prob):
+        # Call the parent Effect constructor first
         super(AttackEffect, self).__init__(element, power)
+
+        # Store move accuracy and critical hit probability
         self.accuracy = accuracy
         self.critical_hit_prob = critical_hit_prob
 
     def target_evades(self, caster, target):
+        # Get respective target speeds
         evasion  = target.get_stat('speed')
         accuracy = caster.get_stat('speed')
 
+        # Compute accuracy modifier based on difference in speeds
         modifier = float(accuracy - evasion)/max(1,float(accuracy+evasion))
         modifier = int(modifier*caster.modifier_minmax)
         modifier = float(max(2, 2 + modifier))/max(2, 2 - modifier)
 
+        # Computer overall accuracy and test for hit using random variable
         accuracy = min(100, self.accuracy * modifier)
         return random.randint(0, 100) > accuracy
 
@@ -81,13 +92,17 @@ class AttackEffect(Effect):
 
         return damage
 
+    # Simple computation of critical hit depending on critical_hit_prob of spell
     def is_critical_hit(self):
         return random.randint(0, 100) < self.critical_hit_prob
 
+    # Override parent apply effect method for our AttachEffect
     def apply_effect(self, caster, target):
+        # Test for evasion and report if target dodged
         if self.target_evades(caster, target):
             print("{} evades the attack.".format(target.name))
         else:
+            # Apply damage
             damage = self.compute_damage(caster, target, self.is_critical_hit())
             target.take_damage(damage)
 

@@ -7,15 +7,13 @@ class Fighter:
         self.attack = 0
         self.defense = 40
         self.speed = 10
-        self.element = "Dark"
+        self.element = "Earth"
 
         self.cur_move = 0
 
         self.moves = [
-            "Sludge Puddle",
-            "Disorienting Mist",
-            "Withering Glance",
-            "Fractured Armour"
+            "Rock Smash",
+            "Landslide"
         ]
 
     def make_move(self, allies, enemies):

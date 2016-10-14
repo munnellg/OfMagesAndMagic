@@ -175,7 +175,7 @@ class FighterManager:
         return self.cur_hp > 0
 
     def __str__(self):
-        return "{:>10} - {:>5} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3}".format(
+        return "{:>15} - {:7} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3}".format(
                 self.name,
                 self.element.name,
                 self.cur_hp,
