@@ -1,17 +1,17 @@
-from app.models.fighters import *
+from app.models.mages import *
 
 def build_league():
     return [
         [
-            mary.Fighter,
-            mark.Fighter,
-            michael.Fighter,
-            michelle.Fighter
+            mary.Mage,
+            mark.Mage,
+            michael.Mage,
+            michelle.Mage
         ],
         [
-            john.Fighter,
-            james.Fighter,
-            jill.Fighter,
-            jane.Fighter
+            john.Mage,
+            james.Mage,
+            jill.Mage,
+            jane.Mage
         ]
     ]

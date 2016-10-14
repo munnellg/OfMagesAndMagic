@@ -1,4 +1,4 @@
-from app.models.fighter_manager import FighterManager
+from app.models.mage_manager import MageManager
 
 class Team(list):
     def __init__(self, team_name, team_members):
@@ -7,20 +7,20 @@ class Team(list):
     	self.initialize_team_members()
 
     def initialize_team_members(self):
-    	for fighter in self.constructors:
-    		self.append(FighterManager(fighter()))
+    	for mage in self.constructors:
+    		self.append(MageManager(mage()))
 
     def reinitialize(self):
     	self[:] = []
     	self.initialize_team_members()
 
     def is_defeated(self):
-        teamhp = sum(int(fighter.cur_hp) for fighter in self)
+        teamhp = sum(int(mage.cur_hp) for mage in self)
         return teamhp == 0
 
     def __str__(self):
     	text = self.team_name + "\n"
 
-        for fighter in self:
-            text += str(fighter) + "\n"        
+        for mage in self:
+            text += str(mage) + "\n"        
         return text

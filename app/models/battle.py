@@ -2,20 +2,20 @@ import random
 from app.models.team import Team
 
 class Move:
-    def __init__(self, fighter, ally_team, enemy_team):
-        self.fighter = fighter
+    def __init__(self, mage, ally_team, enemy_team):
+        self.mage = mage
         self.ally_team = ally_team
         self.enemy_team = enemy_team
-        self.rank = self.fighter.get_stat('speed')
+        self.rank = self.mage.get_stat('speed')
 
     def execute(self):
-        self.fighter.make_move(self.ally_team, self.enemy_team)        
+        self.mage.make_move(self.ally_team, self.enemy_team)        
         print("")      
 
 class BattleRound:
     def __init__(self, team1, team2):
-        self.move_order = [Move(fighter, team1, team2) for fighter in team1 if fighter.is_conscious()]
-        self.move_order += [Move(fighter, team2, team1) for fighter in team2 if fighter.is_conscious()]
+        self.move_order = [Move(mage, team1, team2) for mage in team1 if mage.is_conscious()]
+        self.move_order += [Move(mage, team2, team1) for mage in team2 if mage.is_conscious()]
         self.move_order.sort(key=lambda move: -move.rank)
 
         self.cur_move = 0
@@ -23,7 +23,7 @@ class BattleRound:
     def next_move(self):
         self.move_order[self.cur_move].execute()
         self.cur_move += 1        
-        while self.cur_move < len(self.move_order) and not self.move_order[self.cur_move].fighter.is_conscious():            
+        while self.cur_move < len(self.move_order) and not self.move_order[self.cur_move].mage.is_conscious():            
             self.cur_move += 1
         
         return self.cur_move >= len(self.move_order)

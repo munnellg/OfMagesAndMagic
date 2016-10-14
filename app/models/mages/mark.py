@@ -1,14 +1,13 @@
-class Fighter:
+class Mage:
     def __init__(self):
         self.name  = "Mark"
-        self.max_hp = 50
-        self.hp = self.max_hp
+        self.health = 50
         self.attack = 40
         self.defense = 5
         self.speed = 5
         self.element = "Fire"
 
-        self.moves = [
+        self.spells = [
             "Fireball",
             "Kinetic Blast"
         ]
@@ -25,7 +24,7 @@ class Fighter:
         return target
 
     def make_move(self, allies, enemies):
-        if self.hp <= 20:
+        if self.health <= 20:
             self.order = "Heal Me"
 
         target = self.find_target(enemies)
@@ -34,5 +33,3 @@ class Fighter:
             return ("Fireball", target)
         else:
             return ("Kinetic Blast", target)
-
-fighter = Fighter()

@@ -1,14 +1,14 @@
-class Fighter:
+class Mage:
     def __init__(self):
         self.name  = "James"
-        self.max_hp = 60        
+        self.health = 60
         self.attack = 14
         self.defense = 13
         self.speed = 13
         self.element = "Ice"
 
-        self.hp = self.max_hp
-        self.moves = [
+        self.max_hp = self.health
+        self.spells = [
             "Kinetic Blast",
             "Ice Breaker",
         ]
@@ -16,7 +16,7 @@ class Fighter:
     def find_target(self, enemies):
         i = 0
 
-        while enemies[i].hp == 0 and i<len(enemies)-1:
+        while enemies[i].health == 0 and i<len(enemies)-1:
             i += 1
 
         return enemies[i]
@@ -28,5 +28,3 @@ class Fighter:
             return("Ice Breaker", target)
         else:
             return("Kinetic Blast", target)
-
-fighter = Fighter()

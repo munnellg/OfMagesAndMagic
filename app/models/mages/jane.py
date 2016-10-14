@@ -1,14 +1,14 @@
-class Fighter:
+class Mage:
     def __init__(self):
         self.name  = "Jane"
-        self.max_hp = 45
-        self.hp = self.max_hp
+        self.health = 45
         self.attack = 25
         self.defense = 25
         self.speed = 5
         self.element = "Water"
 
-        self.moves = [
+        self.max_hp = self.health
+        self.spells = [
             "Tidal Wave",
             "Water Jet",
             "Kinetic Blast"
@@ -17,19 +17,19 @@ class Fighter:
     def count_weak_enemies(self, enemies):
         count = 0
         for enemy in enemies:
-            if enemy.element == "Fire" and enemy.hp > 0:
+            if enemy.element == "Fire" and enemy.health > 0:
                 count += 1
         return count
 
     def find_live_target(self, enemies):
         for enemy in enemies:
-            if enemy.hp != 0:
+            if enemy.health != 0:
                 return enemy
         return enemies[0]
 
     def find_weak_target(self, enemies):
         for enemy in enemies:
-            if enemy.element == "Fire" and enemy.hp != 0:
+            if enemy.element == "Fire" and enemy.health != 0:
                 return enemy
         return enemies[0]
 
@@ -42,5 +42,3 @@ class Fighter:
             return ("Water Jet", self.find_weak_target(enemies))
         else:
             return ("Kinetic Blast", self.find_live_target(enemies))
-
-fighter = Fighter()

@@ -1,41 +1,41 @@
 from app.models import magic
 import time
 
-class FighterManager:
+class MageManager:
 
-    def __init__(self, fighter):
-        self.fighter = fighter
+    def __init__(self, mage):
+        self.mage = mage
         self.modifier_minmax = 6
-        self.move_limit = 4
+        self.spell_limit = 4
         self.stat_limit = 100
 
-        self.name    = fighter.name
-        self.element = magic.SpellBook.get_element_object(self.fighter.element)
+        self.name    = mage.name
+        self.element = magic.SpellBook.get_element_object(self.mage.element)
         self.spellbook = magic.SpellBook()
 
-        self.moves = fighter.moves
+        self.spells = mage.spells
 
-        if len(self.moves) > self.move_limit:
-            printf("{} has too many moves. Reducing to {}".format(self.name, self.move_limit))
-            self.moves = self.moves[:self.move_limit]
+        if len(self.spells) > self.spell_limit:
+            printf("{} has too many spells. Reducing to {}".format(self.name, self.spell_limit))
+            self.spells = self.spells[:self.spell_limit]
 
-        stat_total = fighter.max_hp + fighter.attack + fighter.defense + fighter.speed
+        stat_total = mage.health + mage.attack + mage.defense + mage.speed
         if stat_total > self.stat_limit:
             print("{}'s stats are too high. Reducing".format(self.name))
 
             # All stats go down by a suitable ratio
-            fighter.max_hp  = int(self.stat_limit * fighter.max_hp/stat_total)
-            fighter.attack  = int(self.stat_limit * fighter.attack/stat_total)
-            fighter.defense = int(self.stat_limit * fighter.defense/stat_total)
-            fighter.speed   = int(self.stat_limit * fighter.speed/stat_total)
+            mage.health  = int(self.stat_limit * mage.health/stat_total)
+            mage.attack  = int(self.stat_limit * mage.attack/stat_total)
+            mage.defense = int(self.stat_limit * mage.defense/stat_total)
+            mage.speed   = int(self.stat_limit * mage.speed/stat_total)
 
-        self.max_hp = fighter.max_hp
-        self.cur_hp = fighter.max_hp
+        self.max_hp = mage.health
+        self.cur_hp = mage.health
 
         self.base_stats = {
-            'attack'     : fighter.attack,
-            'defense'    : fighter.defense,
-            'speed'      : fighter.speed
+            'attack'     : mage.attack,
+            'defense'    : mage.defense,
+            'speed'      : mage.speed
         }
 
         self.stat_modifiers = {
@@ -63,34 +63,34 @@ class FighterManager:
         # Return modified stat (rounded down)
         return int(self.base_stats[stat] * modifier)
 
-    # Use Fighter attribute to plan and execute a move
+    # Use Mage attribute to plan and execute a spell
     def make_move(self, allies, enemies):
-        # Make sure we can make a move to begin with
+        # Make sure we can make a spell to begin with
         if not self.is_conscious():
-            print("{} has fainted and cannot make a move".format(self.name))
+            print("{} has fainted and cannot make a spell".format(self.name))
             return
 
-        print("{} is planning a move".format(self.name))
+        print("{} is planning a spell".format(self.name))
 
-        # Flatten fighter managers for the simple AI functions
-        flattened_allies = [fighter.flatten() for fighter in allies]
-        flattened_enemies = [fighter.flatten() for fighter in enemies]
+        # Flatten mage managers for the simple AI functions
+        flattened_allies = [mage.flatten() for mage in allies]
+        flattened_enemies = [mage.flatten() for mage in enemies]
 
         # Get the AI to make a choice
-        decision = self.fighter.make_move(flattened_allies, flattened_enemies)
+        decision = self.mage.make_move(flattened_allies, flattened_enemies)
 
         # Test to ensure that the AI returned a tuple (valid choice)
         if type(decision) is not tuple:
             print("{} does nothing".format(self.name))
             return
 
-        # Make sure the AI chose a valid move
-        if decision[0] not in self.moves:
+        # Make sure the AI chose a valid spell
+        if decision[0] not in self.spells:
             print("{} does not know {}".format(self.name, decision[0]))
             return
 
-        # Uplift the target to one of the FighterManager objects.
-        # Don't want to work with raw Fighter object lest cheating happen
+        # Uplift the target to one of the MageManager objects.
+        # Don't want to work with raw Mage object lest cheating happen
         if decision[1] == flattened_allies:
             # Targeted all/random allies
             target = allies
@@ -98,9 +98,9 @@ class FighterManager:
             # Targeted all/random enemies
             target = enemies
         else:
-            # Last case, targeted specific fighter. Find out who
+            # Last case, targeted specific mage. Find out who
             # Search allies and enemies for target
-            target = [t for t in allies+enemies if t.fighter==decision[1]]
+            target = [t for t in allies+enemies if t.mage==decision[1]]
 
             # If we find one, great!
             if len(target) > 0:
@@ -165,11 +165,11 @@ class FighterManager:
             self.stat_modifiers[stat] -= delta
 
     def flatten(self):
-        self.fighter.hp      = self.cur_hp
-        self.fighter.attack  = self.get_stat('attack')
-        self.fighter.defense = self.get_stat('defense')
-        self.fighter.speed   = self.get_stat('speed')
-        return self.fighter
+        self.mage.health  = self.cur_hp
+        self.mage.attack  = self.get_stat('attack')
+        self.mage.defense = self.get_stat('defense')
+        self.mage.speed   = self.get_stat('speed')
+        return self.mage
 
     def is_conscious(self):
         return self.cur_hp > 0
