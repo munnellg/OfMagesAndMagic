@@ -1,10 +1,9 @@
 import random
-import xml.etree.ElementTree as ET 
+import xml.etree.ElementTree as ET
 
 ##########################################
 #      Spell and Character Elements      #
 ##########################################
-
 # Default Element class.
 class Element(object):
     def __init__(self, name, strong, weak, compatible):
@@ -42,18 +41,18 @@ class Effect(object):
 class AttackEffect(Effect):
     def __init__(self, element, power, accuracy, critical_hit_prob):
         super(AttackEffect, self).__init__(element, power)
-        self.accuracy = accuracy        
+        self.accuracy = accuracy
         self.critical_hit_prob = critical_hit_prob
 
     def target_evades(self, caster, target):
-        evasion  = target.get_stat_modifier('evasion')
-        accuracy = caster.get_stat_modifier('accuracy')
+        evasion  = target.get_stat('speed')
+        accuracy = caster.get_stat('speed')
 
-        modifier = accuracy - evasion
+        modifier = float(accuracy - evasion)/max(1,float(accuracy+evasion))
+        modifier = int(modifier*caster.modifier_minmax)
         modifier = float(max(2, 2 + modifier))/max(2, 2 - modifier)
 
         accuracy = min(100, self.accuracy * modifier)
-
         return random.randint(0, 100) > accuracy
 
     def compute_damage(self, caster, target, critical_hit=False):
@@ -66,7 +65,7 @@ class AttackEffect(Effect):
             attack = caster.get_stat('attack')
             defense = target.get_stat('defense')
 
-        damage = 4 * attack * self.power//defense
+        damage = 4 * attack * self.power//max(1,defense)
         damage = damage//50
         damage += 2
 
@@ -173,7 +172,7 @@ class Magic:
 ##########################################
 class SpellBook:
     spells   = {}
-    elements = {}    
+    elements = {}
 
     spell_constructors  = {
         'group'  : GroupSpell,
@@ -188,7 +187,7 @@ class SpellBook:
     }
 
     def __init__(self):
-        self.magic = Magic()        
+        self.magic = Magic()
 
     def cast_spell(self, spell, caster, target):
         spell = SpellBook.get_spell_object(spell)
@@ -198,12 +197,12 @@ class SpellBook:
     @staticmethod
     def __load_elements(xml_tree):
         elements = xml_tree.find('elements').findall('element')
-        
+
         # Load element types from the XML file
         for element in elements:
             # Get the name of the element
-            name = element.attrib['name'] 
-            
+            name = element.attrib['name']
+
             # Get strengths, weaknesses and compatabilities
             strong = [elem.text for elem in element.findall('strong/element')]
             weak = [elem.text for elem in element.findall('weak/element')]
@@ -214,7 +213,7 @@ class SpellBook:
 
             # Add the element to our spell book
             SpellBook.elements[name] = Element(name, strong, weak, compatible)
-    
+
     @staticmethod
     def __load_spells(xml_tree):
         spells   = xml_tree.find('spells').findall('spell')
@@ -223,9 +222,9 @@ class SpellBook:
         for spell in spells:
             # Get the name of the spell
             name    = spell.attrib['name']
-            
+
             # Determine the spell's element type (with error checking)
-            element = spell.find('element')            
+            element = spell.find('element')
 
             # Element tag is missing
             if element == None:
@@ -244,20 +243,20 @@ class SpellBook:
 
             # Load the effects that the spell has
             effects = []
-            for effect in spell.findall('effect'):                
+            for effect in spell.findall('effect'):
                 # Get the effect's type and remove that entry from the dictionary
                 effect_type = effect.attrib.pop('type', None)
 
                 # Cast dictionary elements to ints where possible
                 for key in effect.attrib:
-                    try: 
+                    try:
                         new_val = int(effect.attrib[key])
                         effect.attrib[key] = new_val
                     except ValueError:
                         pass
-                
+
                 # Create the effect and append it to our list
-                effects.append(SpellBook.effect_constructors[effect_type](element, **effect.attrib))                
+                effects.append(SpellBook.effect_constructors[effect_type](element, **effect.attrib))
 
             # Create the spell from all that we've loaded
             SpellBook.spells[name] = SpellBook.spell_constructors[spell.attrib['type']](name, effects, element)
@@ -266,7 +265,7 @@ class SpellBook:
     def load_spell_book(spell_book):
         data = ET.parse(spell_book)
         tree = data.getroot()
-        
+
         SpellBook.__load_elements(tree)
         SpellBook.__load_spells(tree)
 

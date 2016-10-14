@@ -13,7 +13,7 @@
             </compatible>
         </element>
         <element name="Fire">
-            <strong>                
+            <strong>
                 <element>Ice</element>
             </strong>
             <weak>
@@ -22,7 +22,7 @@
             </weak>
         </element>
         <element name="Ice">
-            <strong>                
+            <strong>
                 <element>Water</element>
             </strong>
             <weak>
@@ -31,15 +31,15 @@
             </weak>
         </element>
         <element name="Water">
-            <strong>                
+            <strong>
                 <element>Fire</element>
             </strong>
             <weak>
                 <element>Water</element>
                 <element>Ice</element>
-            </weak>            
+            </weak>
         </element>
-        <element name="Light" />        
+        <element name="Light" />
         <element name="Dark" />
     </elements>
     <spells>
@@ -89,17 +89,17 @@
             <element>Light</element>
         </spell>
         <spell name="Eagle Eyes" type="single">
-            <effect type="stat_boost" power="1" stat='accuracy'/>
+            <effect type="stat_boost" power="1" stat='speed'/>
             <element>Light</element>
         </spell>
         <spell name="Fleet Feet" type="single">
-            <effect type="stat_boost" power="1" stat='evasion'/>
+            <effect type="stat_boost" power="1" stat='speed'/>
             <element>Light</element>
-        </spell>       
+        </spell>
 
         <!-- Dark spells -->
         <spell name="Sludge Puddle" type="single">
-            <effect type="stat_reduce" power="1" stat='evasion'/>
+            <effect type="stat_reduce" power="1" stat='speed'/>
             <element>Dark</element>
         </spell>
         <spell name="Withering Glance" type="single">
@@ -111,7 +111,7 @@
             <element>Dark</element>
         </spell>
          <spell name="Disorienting Mist" type="single">
-            <effect type="stat_reduce" power="1" stat='accuracy'/>
+            <effect type="stat_reduce" power="1" stat='speed'/>
             <element>Dark</element>
         </spell>
     </spells>

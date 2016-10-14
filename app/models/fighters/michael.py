@@ -3,9 +3,9 @@ class Fighter:
         self.name  = "Michael"
         self.max_hp = 50
         self.hp = self.max_hp
-        self.attack = 10
+        self.attack = 20
         self.defense = 10
-        self.speed = 10
+        self.speed = 20
         self.element = "Water"
         self.last_move = ""
 

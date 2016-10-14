@@ -2,22 +2,35 @@ from app.models import magic
 import time
 
 class FighterManager:
-    
+
     def __init__(self, fighter):
         self.fighter = fighter
         self.modifier_minmax = 6
+        self.move_limit = 4
+        self.stat_limit = 100
 
         self.name    = fighter.name
         self.element = magic.SpellBook.get_element_object(self.fighter.element)
         self.spellbook = magic.SpellBook()
 
-        self.max_hp = fighter.hp
-        self.cur_hp = fighter.hp
-
         self.moves = fighter.moves
 
-        if len(self.moves) > 4:
-            self.moves = self.moves[:4]
+        if len(self.moves) > self.move_limit:
+            printf("{} has too many moves. Reducing to {}".format(self.name, self.move_limit))
+            self.moves = self.moves[:self.move_limit]
+
+        stat_total = fighter.max_hp + fighter.attack + fighter.defense + fighter.speed
+        if stat_total > self.stat_limit:
+            print("{}'s stats are too high. Reducing".format(self.name))
+
+            # All stats go down by a suitable ratio
+            fighter.max_hp  = int(self.stat_limit * fighter.max_hp/stat_total)
+            fighter.attack  = int(self.stat_limit * fighter.attack/stat_total)
+            fighter.defense = int(self.stat_limit * fighter.defense/stat_total)
+            fighter.speed   = int(self.stat_limit * fighter.speed/stat_total)
+
+        self.max_hp = fighter.max_hp
+        self.cur_hp = fighter.max_hp
 
         self.base_stats = {
             'attack'     : fighter.attack,
@@ -28,9 +41,7 @@ class FighterManager:
         self.stat_modifiers = {
             'attack'     : 0,
             'defense'    : 0,
-            'speed'      : 0,
-            'evasion'    : 0,
-            'accuracy'   : 0
+            'speed'      : 0
         }
 
     # Returns requested stat without any stat modifiers being applied
@@ -56,7 +67,7 @@ class FighterManager:
     def make_move(self, allies, enemies):
         # Make sure we can make a move to begin with
         if not self.is_conscious():
-            print("{} has fainted and cannot make a move".format(self.name))            
+            print("{} has fainted and cannot make a move".format(self.name))
             return
 
         print("{} is planning a move".format(self.name))
@@ -69,15 +80,15 @@ class FighterManager:
         decision = self.fighter.make_move(flattened_allies, flattened_enemies)
 
         # Test to ensure that the AI returned a tuple (valid choice)
-        if type(decision) is not tuple:            
-            print("{} does nothing".format(self.name))            
+        if type(decision) is not tuple:
+            print("{} does nothing".format(self.name))
             return
-        
+
         # Make sure the AI chose a valid move
         if decision[0] not in self.moves:
-            print("{} does not know {}".format(self.name, decision[0]))            
+            print("{} does not know {}".format(self.name, decision[0]))
             return
-        
+
         # Uplift the target to one of the FighterManager objects.
         # Don't want to work with raw Fighter object lest cheating happen
         if decision[1] == flattened_allies:
@@ -86,7 +97,7 @@ class FighterManager:
         elif decision[1] == flattened_enemies:
             # Targeted all/random enemies
             target = enemies
-        else:                                   
+        else:
             # Last case, targeted specific fighter. Find out who
             # Search allies and enemies for target
             target = [t for t in allies+enemies if t.fighter==decision[1]]
@@ -94,24 +105,24 @@ class FighterManager:
             # If we find one, great!
             if len(target) > 0:
                 target = target[0]
-            else:                
+            else:
                 # Invalid target! Don't do anything
                 print("Invalid target")
                 print("")
                 return
-        
+
         # Cast the spell!
-        self.cast_spell(decision[0], target) 
+        self.cast_spell(decision[0], target)
 
     def cast_spell(self, spell, target):
         self.spellbook.cast_spell(spell, self, target)
-        
+
     def restore_health(self, amount):
         if not self.is_conscious():
             print("{} has fainted and cannot have health restored".format(self.name))
-            return    
+            return
 
-        delta = min(amount, self.max_hp - self.cur_hp)        
+        delta = min(amount, self.max_hp - self.cur_hp)
         self.cur_hp += delta
 
         print("{} regained {} HP".format(self.name, delta))
@@ -124,8 +135,8 @@ class FighterManager:
         delta = min(damage, self.cur_hp)
         self.cur_hp -= delta
 
-        print("{} lost {} HP".format(self.name, delta))                
-        
+        print("{} lost {} HP".format(self.name, delta))
+
         if self.cur_hp == 0:
             print("{} fainted".format(self.name))
 
@@ -164,13 +175,11 @@ class FighterManager:
         return self.cur_hp > 0
 
     def __str__(self):
-        return "{:>10} - {:>5} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3} | ACC: {:>3} | EVA: {:>3}".format(
+        return "{:>10} - {:>5} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3}".format(
                 self.name,
                 self.element.name,
-                self.cur_hp,                
+                self.cur_hp,
                 self.get_stat("attack"),
                 self.get_stat("defense"),
-                self.get_stat("speed"),
-                self.get_stat_modifier("evasion"),
-                self.get_stat_modifier("accuracy")
+                self.get_stat("speed")
             )
