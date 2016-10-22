@@ -34,23 +34,10 @@ class Element(object):
 # How a particular spell will affect a targeted enemy
 # Stats targeted, additional modifiers, etc.
 class Effect(object):
-    def __init__(self, element, power):
+    def __init__(self, element, power, accuracy=100):
         self.power = power
         self.element = element
-
-    def apply_effect(self, caster, target):
-        raise NotImplementedError
-
-# A spell which reduces the targets health. Damage is a function of
-# attack power, caster power, target defense and some random variables
-class AttackEffect(Effect):
-    def __init__(self, element, power, accuracy, critical_hit_prob):
-        # Call the parent Effect constructor first
-        super(AttackEffect, self).__init__(element, power)
-
-        # Store move accuracy and critical hit probability
         self.accuracy = accuracy
-        self.critical_hit_prob = critical_hit_prob
 
     def target_evades(self, caster, target):
         # Get respective target speeds
@@ -66,6 +53,19 @@ class AttackEffect(Effect):
         accuracy = min(100, self.accuracy * modifier)
         return random.randint(0, 100) > accuracy
 
+    def apply_effect(self, caster, target):
+        raise NotImplementedError
+
+# A spell which reduces the targets health. Damage is a function of
+# attack power, caster power, target defense and some random variables
+class AttackEffect(Effect):
+    def __init__(self, element, power, accuracy, critical_hit_prob):
+        # Call the parent Effect constructor first
+        super(AttackEffect, self).__init__(element, power, accuracy)
+
+        # Store move accuracy and critical hit probability
+        self.critical_hit_prob = critical_hit_prob
+
     def compute_damage(self, caster, target, critical_hit=False):
         if critical_hit:
             print("Critical hit")
@@ -76,8 +76,8 @@ class AttackEffect(Effect):
             attack = caster.get_stat('attack')
             defense = target.get_stat('defense')
 
-        damage = 4 * attack * self.power//max(1,defense)
-        damage = damage//50
+        damage = 2 * attack * self.power//max(1,defense)
+        damage = damage//25
         damage += 2
 
         if self.element.is_strong_against(target.element):
@@ -96,7 +96,7 @@ class AttackEffect(Effect):
     def is_critical_hit(self):
         return random.randint(0, 100) < self.critical_hit_prob
 
-    # Override parent apply effect method for our AttachEffect
+    # Override parent apply effect method for our AttackEffect
     def apply_effect(self, caster, target):
         # Test for evasion and report if target dodged
         if self.target_evades(caster, target):
@@ -105,6 +105,46 @@ class AttackEffect(Effect):
             # Apply damage
             damage = self.compute_damage(caster, target, self.is_critical_hit())
             target.take_damage(damage)
+
+class ReboundAttackEffect(AttackEffect):
+    def __init__(self, element, power, accuracy, critical_hit_prob, rebound):
+        # Call the parent Effect constructor first
+        super(ReboundAttackEffect, self).__init__(element, power, accuracy, critical_hit_prob)
+
+        # Store move accuracy and critical hit probability
+        self.rebound = rebound
+
+    # Override parent apply effect method for our AttackEffect
+    def apply_effect(self, caster, target):
+        # Test for evasion and report if target dodged
+        if self.target_evades(caster, target):
+            print("{} evades the attack.".format(target.name))
+        else:
+            # Apply damage
+            damage = self.compute_damage(caster, target, self.is_critical_hit())
+            target.take_damage(damage)
+            print("{} is hit by the rebound".format(caster.name))
+            caster.take_damage((damage*self.rebound)//100)
+
+class LeechAttackEffect(AttackEffect):
+    def __init__(self, element, power, accuracy, critical_hit_prob, leech):
+        # Call the parent Effect constructor first
+        super(LeechAttackEffect, self).__init__(element, power, accuracy, critical_hit_prob)
+
+        # Leech amount
+        self.leech = leech
+
+    # Override parent apply effect method for our LeechAttackEffect
+    def apply_effect(self, caster, target):
+        # Test for evasion and report if target dodged
+        if self.target_evades(caster, target):
+            print("{} evades the attack.".format(target.name))
+        else:
+            # Apply damage
+            damage = self.compute_damage(caster, target, self.is_critical_hit())
+            target.take_damage(damage)
+            print("{} absorbs energy from {}".format(caster.name, target.name))
+            caster.restore_health((damage*self.leech)//100)
 
 class BoostStatEffect(Effect):
     def __init__(self, element, power, stat):
@@ -115,8 +155,8 @@ class BoostStatEffect(Effect):
         target.boost_stat(self.stat, self.power)
 
 class ReduceStatEffect(Effect):
-    def __init__(self, element, power, stat):
-        super(ReduceStatEffect, self).__init__(element, power)
+    def __init__(self, element, power, accuracy, stat):
+        super(ReduceStatEffect, self).__init__(element, power, accuracy)
         self.stat = stat
 
     def apply_effect(self, caster, target):
@@ -195,10 +235,12 @@ class SpellBook:
     }
 
     effect_constructors = {
-        'attack'      : AttackEffect,
-        'stat_boost'  : BoostStatEffect,
-        'stat_reduce' : ReduceStatEffect,
-        'heal'        : HealingEffect
+        'attack'        : AttackEffect,
+        'rebound_attack' : ReboundAttackEffect,
+        'leech_attack'   : LeechAttackEffect,
+        'stat_boost'    : BoostStatEffect,
+        'stat_reduce'   : ReduceStatEffect,
+        'heal'          : HealingEffect
     }
 
     def __init__(self):
@@ -237,7 +279,7 @@ class SpellBook:
         for spell in spells:
             # Get the name of the spell
             name    = spell.attrib['name']
-
+            print(name)
             # Determine the spell's element type (with error checking)
             element = spell.find('element')
 

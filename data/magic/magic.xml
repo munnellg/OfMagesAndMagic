@@ -71,57 +71,219 @@
     <spells>
         <!-- Normal spells -->
         <spell name="Kinetic Blast" type="single">
-            <effect type="attack" power="40" accuracy="100" critical_hit_prob="8"/>
+            <effect type="attack" power="50" accuracy="100" critical_hit_prob="8"/>
             <element>Normal</element>
         </spell>
 
         <!-- Fire spells -->
+
+        <!-- Standard Attacks -->
         <spell name="Fireball" type="single">
+            <effect type="attack" power="40" accuracy="100" critical_hit_prob="10"/>
+            <element>Fire</element>
+        </spell>
+        <spell name="Drop Mixtape" type="single">
+            <effect type="attack" power="60" accuracy="100" critical_hit_prob="6"/>
+            <element>Fire</element>
+        </spell>
+        <spell name="Lava Storm" type="single">
             <effect type="attack" power="50" accuracy="100" critical_hit_prob="8"/>
             <element>Fire</element>
         </spell>
+
+        <!-- Group Attacks -->
         <spell name="Flame Wave" type="group">
-            <effect type="attack" power="20" critical_hit_prob="8" accuracy="100"/>
+            <effect type="attack" power="20" critical_hit_prob="2" accuracy="100"/>
+            <element>Fire</element>
+        </spell>
+        <spell name="Blazing Salvo" type="group">
+            <effect type="attack" power="15" critical_hit_prob="4" accuracy="100"/>
+            <element>Fire</element>
+        </spell>
+
+        <!-- Power Attacks -->
+        <spell name="Backdraft" type="single">
+            <effect type="rebound_attack" power="90" critical_hit_prob="4" accuracy="100" rebound="10"/>
+            <element>Fire</element>
+        </spell>
+
+        <!-- Specialization Attacks -->
+        <spell name="Solar Blaze" type="single">
+            <effect type="stat_boost" power="1" stat="attack"/>
+            <element>Fire</element>
+        </spell>
+        <spell name="Unmake" type="single">
+            <effect type="stat_reduce" power="1" stat="defense" accuracy="100"/>
             <element>Fire</element>
         </spell>
 
         <!-- Ice spells -->
+
+        <!-- Standard Attacks -->
         <spell name="Ice Breaker" type="single">
             <effect type="attack" power="50" accuracy="100" critical_hit_prob="8"/>
             <element>Ice</element>
         </spell>
+        <spell name="Chill Strike" type="single">
+            <effect type="attack" power="40" accuracy="100" critical_hit_prob="10"/>
+            <element>Ice</element>
+        </spell>
+        <spell name="Frostbite" type="single">
+            <effect type="attack" power="60" accuracy="100" critical_hit_prob="6"/>
+            <element>Ice</element>
+        </spell>
+
+        <!-- Group Attacks -->
         <spell name="Glacier" type="group">
-            <effect type="attack" power="20" accuracy="100" critical_hit_prob="8"/>
+            <effect type="attack" power="20" accuracy="100" critical_hit_prob="2"/>
+            <element>Ice</element>
+        </spell>
+        <spell name="Blizzard" type="group">
+            <effect type="attack" power="15" critical_hit_prob="4" accuracy="100"/>
+            <element>Ice</element>
+        </spell>
+
+        <!-- Power Attacks -->
+        <spell name="Frost Storm" type="single">
+            <effect type="rebound_attack" power="90" critical_hit_prob="4" accuracy="100" rebound="10"/>
+            <element>Ice</element>
+        </spell>
+
+        <!-- Specialization Attacks -->
+        <spell name="Ice Wall" type="single">
+            <effect type="stat_boost" power="1" stat="defense"/>
+            <element>Ice</element>
+        </spell>
+        <spell name="Ice Cage" type="single">
+            <effect type="stat_reduce" power="1" stat="speed"  accuracy="100"/>
             <element>Ice</element>
         </spell>
 
         <!-- Water spells -->
+
+        <!-- Standard Attacks -->
         <spell name="Water Jet" type="single">
             <effect type="attack" power="50" accuracy="100" critical_hit_prob="8"/>
             <element>Water</element>
         </spell>
+        <spell name="Power Swirl" type="single">
+            <effect type="attack" power="40" accuracy="100" critical_hit_prob="10"/>
+            <element>Water</element>
+        </spell>
+        <spell name="Sting of Neptune" type="single">
+            <effect type="attack" power="60" accuracy="100" critical_hit_prob="6"/>
+            <element>Water</element>
+        </spell>
+
+        <!-- Group Attacks -->
+        <spell name="Riptide" type="group">
+            <effect type="attack" power="20" accuracy="100" critical_hit_prob="2"/>
+            <element>Water</element>
+        </spell>
         <spell name="Tidal Wave" type="group">
-            <effect type="attack" power="20" accuracy="100" critical_hit_prob="8"/>
+            <effect type="attack" power="15" accuracy="100" critical_hit_prob="4"/>
+            <element>Water</element>
+        </spell>
+
+        <!-- Power Attacks -->
+        <spell name="Monsoon" type="single">
+            <effect type="rebound_attack" power="90" critical_hit_prob="4" accuracy="100" rebound="10"/>
+            <element>Water</element>
+        </spell>
+
+        <!-- Specialization Attacks -->
+        <spell name="Absorb" type="single">
+            <effect type="leech_attack" power="30" accuracy="100" critical_hit_prob="0" leech="10"/>
+            <element>Water</element>
+        </spell>
+        <spell name="Healing Wave" type="single">
+            <effect type="heal" power="20"/>
             <element>Water</element>
         </spell>
 
         <!-- Thunder Spells -->
+
+        <!-- Standard Attacks -->
         <spell name="Jolt" type="single">
+            <effect type="attack" power="40" accuracy="100" critical_hit_prob="10"/>
+            <element>Thunder</element>
+        </spell>
+        <spell name="Lightning Bolt" type="single">
             <effect type="attack" power="50" accuracy="100" critical_hit_prob="8"/>
             <element>Thunder</element>
         </spell>
-        <spell name="Storm" type="group">
-            <effect type="attack" power="20" accuracy="100" critical_hit_prob="8"/>
+        <spell name="Lightning Blade" type="single">
+            <effect type="attack" power="60" accuracy="100" critical_hit_prob="6"/>
+            <element>Thunder</element>
+        </spell>
+
+        <!-- Group Attacks -->
+        <spell name="Thunder Storm" type="group">
+            <effect type="attack" power="20" accuracy="100" critical_hit_prob="2"/>
+            <element>Thunder</element>
+        </spell>
+        <spell name="Revenge of Tesla" type="group">
+            <effect type="attack" power="15" accuracy="100" critical_hit_prob="4"/>
+            <element>Thunder</element>
+        </spell>
+
+        <!-- Power Attacks -->
+        <spell name="Voltage Slam" type="single">
+            <effect type="rebound_attack" power="90" critical_hit_prob="4" accuracy="100" rebound="10"/>
+            <element>Thunder</element>
+        </spell>
+
+        <!-- Specialization Attacks -->
+        <spell name="Charge" type="single">
+            <effect type="stat_boost" power="1" stat="speed"/>
+            <element>Thunder</element>
+        </spell>
+        <spell name="Shattering Bolt" type="single">
+            <effect type="stat_reduce" power="1" stat="defense" accuracy="100"/>
             <element>Thunder</element>
         </spell>
 
         <!-- Earth Spells -->
+
+        <!-- Standard Attacks -->
         <spell name="Rock Smash" type="single">
             <effect type="attack" power="50" accuracy="100" critical_hit_prob="8"/>
             <element>Earth</element>
         </spell>
+        <spell name="Stalactite Drop" type="single">
+            <effect type="attack" power="40" accuracy="100" critical_hit_prob="10"/>
+            <element>Earth</element>
+        </spell>
+        <!-- Aonghus McGovern is a funny man -->
+        <spell name="Bassault" type="single">
+            <effect type="attack" power="60" accuracy="100" critical_hit_prob="6"/>
+            <element>Earth</element>
+        </spell>
+
+        <!-- Power Attack -->
+        <spell name="Fracture" type="single">
+            <effect type="attack" power="90" accuracy="100" critical_hit_prob="4"/>
+            <element>Earth</element>
+        </spell>
+
+        <!-- Group Attacks -->
         <spell name="Landslide" type="group">
-            <effect type="attack" power="20" accuracy="100" critical_hit_prob="8"/>
+            <effect type="attack" power="20" accuracy="100" critical_hit_prob="2"/>
+            <element>Earth</element>
+        </spell>
+
+        <spell name="Earthquake" type="group">
+            <effect type="attack" power="15" accuracy="100" critical_hit_prob="4"/>
+            <element>Earth</element>
+        </spell>
+
+        <!-- Specialization Attacks -->
+        <spell name="Quicksand" type="single">
+            <effect type="stat_reduce" power="1" stat="speed"  accuracy="100"/>
+            <element>Earth</element>
+        </spell>
+        <spell name="Granite Armour" type="single">
+            <effect type="stat_boost" power="1" stat="defense" />
             <element>Earth</element>
         </spell>
     </spells>

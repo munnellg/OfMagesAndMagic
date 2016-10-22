@@ -12,11 +12,10 @@ class Walton:
 
     def run(self):
         print("Starting Battle!")
-        print(self.battle)
 
         while self.battle.is_in_battle():
-            self.battle.update()
             print(self.battle)
-            
+            self.battle.update()
+
         print("Team {} won".format(self.battle.get_winner() + 1))
         print(self.battle)

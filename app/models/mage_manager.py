@@ -2,51 +2,69 @@ from app.models import magic
 import time
 
 class MageManager:
+    modifier_minmax = 6
+    spell_limit     = 4
+    stat_limit      = 100
+    default_element = "Ice"
 
     def __init__(self, mage):
         self.mage = mage
-        self.modifier_minmax = 6
-        self.spell_limit = 4
-        self.stat_limit = 100
 
         self.name    = mage.name
         self.element = magic.SpellBook.get_element_object(self.mage.element)
+        if self.element is None:
+            print("Invalid element choice {}. Using default {}".format(self.mage.element, MageManager.default_element))
+            self.element = magic.SpellBook.get_element_object(MageManager.default_element)
+
         self.spellbook = magic.SpellBook()
 
+        # Find out what spells our mage picked
         self.spells = mage.spells
 
-        if len(self.spells) > self.spell_limit:
-            printf("{} has too many spells. Reducing to {}".format(self.name, self.spell_limit))
-            self.spells = self.spells[:self.spell_limit]
-
-        stat_total = mage.health + mage.attack + mage.defense + mage.speed
-        if stat_total > self.stat_limit:
-            print("{}'s stats are too high. Reducing".format(self.name))
-
-            # All stats go down by a suitable ratio
-            mage.health  = int(self.stat_limit * mage.health/stat_total)
-            mage.attack  = int(self.stat_limit * mage.attack/stat_total)
-            mage.defense = int(self.stat_limit * mage.defense/stat_total)
-            mage.speed   = int(self.stat_limit * mage.speed/stat_total)
-
-        self.max_hp = mage.health
-        self.cur_hp = mage.health
-
+        # Store our mage's stats
+        self.max_hp = abs(mage.health)
         self.base_stats = {
-            'attack'     : mage.attack,
-            'defense'    : mage.defense,
-            'speed'      : mage.speed
+            'attack'     : abs(mage.attack),
+            'defense'    : abs(mage.defense),
+            'speed'      : abs(mage.speed)
         }
 
+        # Keep track of modifiers applied to our stats
         self.stat_modifiers = {
             'attack'     : 0,
             'defense'    : 0,
             'speed'      : 0
         }
 
+        # Keep track of how our mage is faring healthwise
+        self.cur_hp = self.max_hp
+
+        # Make sure we don't have too many spells
+        self.impose_spell_limit()
+
+        # Make sure our stats aren't too high
+        self.impose_stat_limit()
+
     # Returns requested stat without any stat modifiers being applied
     def get_base_stat(self, stat):
         return self.base_stats[stat]
+
+    def impose_stat_limit(self):
+        stat_total = self.max_hp + self.base_stats['attack'] + self.base_stats['defense'] + self.base_stats['speed']
+
+        if stat_total > MageManager.stat_limit:
+            print("{}'s stats are too high. Reducing".format(self.name))
+
+            # All stats go down by a suitable ratio
+            self.max_hp  = int(MageManager.stat_limit * self.max_hp/stat_total)
+            self.base_stats['attack']  = int(MageManager.stat_limit * abs(self.base_stats['attack'])/stat_total)
+            self.base_stats['defense'] = int(MageManager.stat_limit * abs(self.base_stats['defense'])/stat_total)
+            self.base_stats['speed']   = int(MageManager.stat_limit * abs(self.base_stats['speed'])/stat_total)
+
+    def impose_spell_limit(self):
+        if len(self.spells) > MageManager.spell_limit:
+            printf("{} has too many spells. Reducing to {}".format(self.name, MageManager.spell_limit))
+            self.spells = self.spells[:MageManager.spell_limit]
 
     # Returns requested stat modifier without the base stat
     def get_stat_modifier(self, stat):
@@ -145,7 +163,7 @@ class MageManager:
             print("{} has fainted and is not affected".format(self.name))
             return
 
-        delta = min(amount, self.modifier_minmax - self.stat_modifiers[stat])
+        delta = min(amount, MageManager.modifier_minmax - self.stat_modifiers[stat])
         if delta == 0:
             print("{}'s {} stat can't go any higher".format(self.name, stat))
         else:
@@ -157,7 +175,7 @@ class MageManager:
             print("{} has fainted and is not affected".format(self.name))
             return
 
-        delta = min(amount, self.stat_modifiers[stat] + self.modifier_minmax )
+        delta = min(amount, self.stat_modifiers[stat] + MageManager.modifier_minmax )
         if delta == 0:
             print("{}'s {} stat can't go any lower".format(self.name, stat))
         else:
