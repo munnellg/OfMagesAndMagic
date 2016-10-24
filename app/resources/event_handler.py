@@ -1,6 +1,9 @@
 import pygame
 from collections import defaultdict
 
+STATE_CHANGED = pygame.USEREVENT + 1
+SOUND_EFFECT   = pygame.USEREVENT + 2
+
 class EventHandler:
     def __init__(self):
         self.callbacks = {
@@ -9,13 +12,17 @@ class EventHandler:
             pygame.MOUSEMOTION       : self.mouse_motion,
             pygame.MOUSEBUTTONUP     : self.mouse_button_state_change,
             pygame.MOUSEBUTTONDOWN   : self.mouse_button_state_change,
-            pygame.QUIT              : self.quit
+            pygame.QUIT              : self.quit,
+            STATE_CHANGED            : self.state_change,
+            SOUND_EFFECT             : self.sound_effect
         }
 
         self.key_states = defaultdict(int)
         self.mouse_button_states = defaultdict(int)
 
         self.key_listeners  = []
+        self.state_change_listeners = []
+        self.sound_effect_listeners = []
         self.mouse_button_listeners = []
         self.quit_listeners = []
 
@@ -41,13 +48,32 @@ class EventHandler:
     def unregister_mouse_button_listener(self, listener):
         self.mouse_button_listeners.remove(listener)
 
+    def register_state_change_listener(self, listener):
+        self.state_change_listeners.append(listener)
+
+    def unregister_state_change_listener(self, listener):
+        self.state_change_listeners.remove(listener)
+
+    def register_sound_effect_listener(self, listener):
+        self.sound_effect_listeners.append(listener)
+
+    def unregister_state_change_listener(self, listener):
+        self.sound_effect_listeners.remove(listener)
+
     def key_state_change(self, event):
         self.key_states[event.key] = pygame.time.get_ticks()
         for listener in self.key_listeners:
             listener(event)
 
+    def state_change(self, event):
+        for listener in self.state_change_listeners:
+            listener(event)
+
+    def sound_effect(self, event):
+        for listener in self.sound_effect_listeners:
+            listener(event)
+
     def mouse_motion(self, event):
-        #print(event)
         return
 
     def mouse_button_state_change(self, event):
