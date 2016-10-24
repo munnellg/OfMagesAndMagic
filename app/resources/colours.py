@@ -1,0 +1,15 @@
+COLOUR_BLUE  = (   0,    0, 255)
+COLOUR_RED   = ( 255,    0,   0)
+COLOUR_GREEN = (   0,  255,   0)
+COLOUR_WHITE = ( 255,  255, 255)
+COLOUR_BLACK = (   0,    0,   0)
+
+# Greens & Browns
+COLOUR_LEAVES_OF_AUTUMN = ( 101,  91,  19 )
+COLOUR_628450           = (  98, 132,  80 )
+COLOUR_FUTURE           = (  96, 150, 107 )
+COLOUR_AMLSERVINYOUR    = ( 132, 172, 149 )
+COLOUR_ASTERIX          = ( 248, 239, 214 )
+
+COLOUR_IRISH_GREEN  = (   0, 154,  73 )
+COLOUR_IRISH_ORANGE = ( 255, 121,   0 )

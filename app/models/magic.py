@@ -279,7 +279,7 @@ class SpellBook:
         for spell in spells:
             # Get the name of the spell
             name    = spell.attrib['name']
-            print(name)
+            
             # Determine the spell's element type (with error checking)
             element = spell.find('element')
 
