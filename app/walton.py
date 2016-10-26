@@ -30,6 +30,7 @@ class Walton:
         self.event_handler.register_state_change_listener(self.music_manager.handle_state_change)
         self.event_handler.register_sound_effect_listener(self.sound_manager.handle_sound_effect)
 
+        # self.event_handler.register_settings_update_listener(self.update_settings)
         self.event_handler.register_settings_update_listener(self.music_manager.handle_settings_update)
         self.event_handler.register_settings_update_listener(self.sound_manager.handle_settings_update)
 

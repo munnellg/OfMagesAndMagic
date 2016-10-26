@@ -73,7 +73,7 @@ class StateSettings(State):
         m_surface = self.menu.render()
         surface.blit(m_surface, (
                 (self.parent.resolution[0]-m_surface.get_width())//2,
-                max(130,(self.parent.resolution[1]-m_surface.get_height())//2)
+                max(130, (self.parent.resolution[1]-m_surface.get_height())//2)
             )
         )
         return surface

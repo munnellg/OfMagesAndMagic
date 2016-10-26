@@ -42,6 +42,7 @@ class ChoiceMenuItem(MenuItem):
         self.surface_label2 = text_renderer.render_menu_item(label2, colours.COLOUR_WHITE)
         self.padding = 80
         self.selected = 0
+        self.bottom_margin = 0
         self.callback = callback
 
         if self.width < 0:
@@ -105,6 +106,7 @@ class BooleanMenuItem(MenuItem):
         self.value = value
         self.label = label
         self.padding = 30
+        self.bottom_margin = 0
         self.surface_values = [
             text_renderer.render_menu_item("Disabled", colours.COLOUR_WHITE),
             text_renderer.render_menu_item("Enabled", colours.COLOUR_WHITE),
@@ -176,6 +178,7 @@ class MultiOptionMenuItem(MenuItem):
         self.options  = options
         self.selected = selected
         self.padding  = 30
+        self.bottom_margin = 0
         self.label    = label
 
         max_item_width = 0
@@ -250,6 +253,7 @@ class SliderMenuItem(MenuItem):
         self.max_val = max_val
         self.value   = value
         self.padding = 30
+        self.bottom_margin = 0
         self.slider_width = 200
         self.width = max(self.slider_width, self.surface_label.get_width())*2 + self.padding
         self.slider_marker = pygame.Rect(0, 0, 10, 30)
@@ -314,6 +318,7 @@ class ButtonMenuItem:
     def __init__(self, text, callback, height=-1, width=-1):
         self.text = text
         self.callback = callback
+        self.bottom_margin = 0
         self.surface = text_renderer.render_menu_item(text, colours.COLOUR_WHITE)
 
     def render(self):
@@ -324,13 +329,21 @@ class SettingsMenu:
         self.settings = settings
         self.selected = 0
         self.valid_resolutions = ["{} x {}".format(item['width'], item['height']) for item in settings['valid_resolutions'] ]
+        self.spacing_margin = 25
+        self.padding = 10
 
         self.sound_enabled = BooleanMenuItem("Sound", self.settings['sound']['sound_enabled'])
         self.sound_volume = SliderMenuItem("Sound Volume", 0, 100, self.settings['sound']['sound_volume']*100, self.preview_sound_change)
+        self.sound_volume.bottom_margin = self.spacing_margin
+
         self.music_enabled = BooleanMenuItem("Music", self.settings['sound']['music_enabled'])
         self.music_volume = SliderMenuItem("Music Volume", 0, 100, self.settings['sound']['music_volume']*100, self.preview_music_change)
+        self.music_volume.bottom_margin = self.spacing_margin
+
         self.fullscreen = BooleanMenuItem("Fullscreen", self.settings['screen']['fullscreen'])
         self.resolution = MultiOptionMenuItem("Resolution", self.valid_resolutions, self.settings['screen']['resolution'])
+        self.resolution.bottom_margin = self.spacing_margin
+
         self.finished_choice = ChoiceMenuItem("Apply", "Cancel", self.finished)
 
         self.sound_manager = SoundManager()
@@ -348,7 +361,6 @@ class SettingsMenu:
         self.callback = None
         self.done = False
 
-        self.padding = 15
         max_height = 0
         self.width = 0
         for item in self.items:
@@ -357,9 +369,9 @@ class SettingsMenu:
             if item.get_width() > self.width:
                 self.width = item.get_width()
 
-        self.height = (max_height+self.padding)*(len(self.items)+1)
-
+        self.height = (max_height+self.padding)*(len(self.items)) - self.padding
         for item in self.items:
+            self.height += item.bottom_margin
             item.set_height(max_height)
             item.set_width(self.width)
 
@@ -367,19 +379,14 @@ class SettingsMenu:
 
     def render(self):
         surface = pygame.Surface((self.width, self.height))
-
-        for i in range(len(self.items)-1):
+        offset = 0
+        for i in range(len(self.items)):
             item_surface = self.items[i].render()
             surface.blit(item_surface, (
                 0,
-                i*(item_surface.get_height() + self.padding )
+                offset
             ))
-
-        item_surface = self.items[-1].render()
-        surface.blit(item_surface, (
-            0,
-            len(self.items)*(item_surface.get_height() + self.padding )
-        ))
+            offset += self.items[i].get_height()+self.padding+self.items[i].bottom_margin
 
         return surface
 
