@@ -45,13 +45,12 @@ class StateSettings(State):
         self.parent     = main_menu.parent
         self.main_menu  = main_menu
         self.settings   = self.parent.settings
-        self.resolution = self.main_menu.resolution
 
         self.parent.event_handler.register_key_listener(self.handle_keypress)
         self.title = text_renderer.render_title("Options", colours.COLOUR_WHITE)
 
         self.title_position = (
-            (self.resolution[0] - self.title.get_width())// 2,
+            (self.parent.resolution[0] - self.title.get_width())// 2,
             15
         )
 
@@ -66,13 +65,15 @@ class StateSettings(State):
         self.animation = None
         self.menu = SettingsMenu(self.settings)
 
+        self.menu.register_finished_callback(self.finished)
+
     def render(self):
-        surface = pygame.Surface(self.resolution)
+        surface = pygame.Surface(self.parent.resolution)
         surface.blit(self.title, self.title_position)
         m_surface = self.menu.render()
         surface.blit(m_surface, (
-                (self.resolution[0]-m_surface.get_width())//2,
-                (self.resolution[1]-m_surface.get_height())//2
+                (self.parent.resolution[0]-m_surface.get_width())//2,
+                max(130,(self.parent.resolution[1]-m_surface.get_height())//2)
             )
         )
         return surface
@@ -95,6 +96,9 @@ class StateSettings(State):
             if event.key in self.directions:
                 self.animation = None
 
+    def finished(self):
+        self.main_menu.set_state('default')
+
     def update(self, delta_t):
         if self.animation != None:
             self.animation.animate(delta_t)
@@ -106,7 +110,6 @@ class StateAnimatedIntro(State):
     def __init__(self, main_menu):
         self.parent     = main_menu.parent
         self.main_menu  = main_menu
-        self.resolution = main_menu.resolution
         self.title_banner = main_menu.title_banner
         self.alpha = 0
 
@@ -122,11 +125,11 @@ class StateAnimatedIntro(State):
         self.alpha = alpha
 
     def render(self):
-        surface = pygame.Surface(self.resolution)
+        surface = pygame.Surface(self.parent.resolution)
         surface.blit(self.title_banner.render(), self.main_menu.banner_position)
         surface.blit(self.main_menu.menu.get_menu_surface(), self.main_menu.menu_position)
 
-        mask = pygame.Surface(self.resolution, pygame.SRCALPHA)
+        mask = pygame.Surface(self.parent.resolution, pygame.SRCALPHA)
         mask.fill((0,0,0, 255-self.alpha))
         surface.blit(mask, (0,0))
 
@@ -157,17 +160,18 @@ class StateDefault(State):
     def __init__(self, main_menu):
         self.parent     = main_menu.parent
         self.main_menu  = main_menu
-        self.resolution = main_menu.resolution
         self.title_banner = main_menu.title_banner
         self.parent.event_handler.register_key_listener(self.handle_keypress)
+        self.main_menu.menu.selected = 0
         self.animation = None
+
         self.directions = {
             pygame.K_UP   : -1,
             pygame.K_DOWN : 1
         }
 
     def render(self):
-        surface = pygame.Surface(self.resolution)
+        surface = pygame.Surface(self.parent.resolution)
         surface.blit(self.title_banner.render(), self.main_menu.banner_position)
         surface.blit(self.main_menu.menu.render(), self.main_menu.menu_position)
         return surface
@@ -196,10 +200,9 @@ class StateDefault(State):
 class MainMenu:
     def __init__(self, parent):
         self.parent = parent
-        self.resolution = parent.resolution
         self.event_handler = parent.event_handler
         self.title_banner = TitleBanner(self.parent.title)
-        self.banner_position = (self.resolution[0]//10, self.resolution[1]//10)
+        self.banner_position = (self.parent.resolution[0]//10, self.parent.resolution[1]//10)
 
         self.menu = Menu([
             ButtonMenuItem("Start", None),
@@ -208,16 +211,12 @@ class MainMenu:
             ButtonMenuItem("Exit", self.trigger_exit)]
         )
 
-        self.menu_position = (
-            self.resolution[0]-self.resolution[0]//10-self.menu.surface.get_width(),
-            self.resolution[1]-self.resolution[1]//5-self.menu.surface.get_height()
-        )
-
         self.states = {
             "intro"    : StateAnimatedIntro,
             "settings" : StateSettings,
             "default"  : StateDefault
         }
+        self.compute_widget_positions()
 
         self.state_code = "intro"
         self.state = self.states[self.state_code](self)
@@ -226,6 +225,15 @@ class MainMenu:
         self.state.exit_state()
         self.state_code = state
         self.state = self.states[state](self)
+
+    def update_display(self):
+        self.compute_widget_positions()
+
+    def compute_widget_positions(self):
+        self.menu_position = (
+            self.parent.resolution[0]-self.parent.resolution[0]//10-self.menu.surface.get_width(),
+            self.parent.resolution[1]-self.parent.resolution[1]//5-self.menu.surface.get_height()
+        )
 
     def render(self):
         return self.state.render()

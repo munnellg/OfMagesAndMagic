@@ -1,8 +1,9 @@
 import pygame
 from collections import defaultdict
 
-STATE_CHANGED = pygame.USEREVENT + 1
-SOUND_EFFECT   = pygame.USEREVENT + 2
+STATE_CHANGED    = pygame.USEREVENT + 1
+SOUND_EFFECT     = pygame.USEREVENT + 2
+SETTINGS_UPDATED = pygame.USEREVENT + 3
 
 class EventHandler:
     def __init__(self):
@@ -14,7 +15,8 @@ class EventHandler:
             pygame.MOUSEBUTTONDOWN   : self.mouse_button_state_change,
             pygame.QUIT              : self.quit,
             STATE_CHANGED            : self.state_change,
-            SOUND_EFFECT             : self.sound_effect
+            SOUND_EFFECT             : self.sound_effect,
+            SETTINGS_UPDATED         : self.settings_updated
         }
 
         self.key_states = defaultdict(int)
@@ -24,6 +26,7 @@ class EventHandler:
         self.state_change_listeners = []
         self.sound_effect_listeners = []
         self.mouse_button_listeners = []
+        self.settings_listeners     = []
         self.quit_listeners = []
 
     def handle_event(self, event):
@@ -59,6 +62,16 @@ class EventHandler:
 
     def unregister_state_change_listener(self, listener):
         self.sound_effect_listeners.remove(listener)
+
+    def register_settings_update_listener(self, listener):
+        self.settings_listeners.append(listener)
+
+    def unregister_settings_update_listener(self, listener):
+        self.settings_listeners.remove(listener)
+
+    def settings_updated(self, event):
+        for listener in self.settings_listeners:
+            listener(event)
 
     def key_state_change(self, event):
         self.key_states[event.key] = pygame.time.get_ticks()

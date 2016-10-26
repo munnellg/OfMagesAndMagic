@@ -1,7 +1,9 @@
 import pygame
 from app.resources import text_renderer
 from app.resources import colours
-from app.resources.event_handler import SOUND_EFFECT
+from app.resources.sounds import SoundManager
+from app.resources.music import MusicManager
+from app.resources.event_handler import SOUND_EFFECT, SETTINGS_UPDATED
 
 class MenuItem(object):
     def __init__(self, label, height=-1, width=-1):
@@ -242,7 +244,7 @@ class MultiOptionMenuItem(MenuItem):
         return surface
 
 class SliderMenuItem(MenuItem):
-    def __init__(self, label, min_val, max_val, value, height=-1, width=-1):
+    def __init__(self, label, min_val, max_val, value, callback = None, height=-1, width=-1):
         super(SliderMenuItem, self).__init__(label, height, width)
         self.min_val = min_val
         self.max_val = max_val
@@ -251,6 +253,8 @@ class SliderMenuItem(MenuItem):
         self.slider_width = 200
         self.width = max(self.slider_width, self.surface_label.get_width())*2 + self.padding
         self.slider_marker = pygame.Rect(0, 0, 10, 30)
+
+        self.callback = callback
 
         self.increment = (max_val-min_val)//10
 
@@ -267,6 +271,9 @@ class SliderMenuItem(MenuItem):
             self.value = self.max_val
         elif self.value < self.min_val:
             self.value = self.min_val
+
+        if self.callback != None:
+            self.callback(self.value)
 
     def render(self):
         surface = pygame.Surface((self.width, self.height))
@@ -319,13 +326,15 @@ class SettingsMenu:
         self.valid_resolutions = ["{} x {}".format(item['width'], item['height']) for item in settings['valid_resolutions'] ]
 
         self.sound_enabled = BooleanMenuItem("Sound", self.settings['sound']['sound_enabled'])
-        self.sound_volume = SliderMenuItem("Sound Volume", 0, 100, self.settings['sound']['sound_volume']*100)
+        self.sound_volume = SliderMenuItem("Sound Volume", 0, 100, self.settings['sound']['sound_volume']*100, self.preview_sound_change)
         self.music_enabled = BooleanMenuItem("Music", self.settings['sound']['music_enabled'])
-        self.music_volume = SliderMenuItem("Music Volume", 0, 100, self.settings['sound']['music_volume']*100)
+        self.music_volume = SliderMenuItem("Music Volume", 0, 100, self.settings['sound']['music_volume']*100, self.preview_music_change)
         self.fullscreen = BooleanMenuItem("Fullscreen", self.settings['screen']['fullscreen'])
         self.resolution = MultiOptionMenuItem("Resolution", self.valid_resolutions, self.settings['screen']['resolution'])
         self.finished_choice = ChoiceMenuItem("Apply", "Cancel", self.finished)
 
+        self.sound_manager = SoundManager()
+        self.music_manager = MusicManager()
         self.items = [
             self.sound_enabled,
             self.sound_volume,
@@ -336,6 +345,7 @@ class SettingsMenu:
             self.finished_choice
         ]
 
+        self.callback = None
         self.done = False
 
         self.padding = 15
@@ -373,6 +383,12 @@ class SettingsMenu:
 
         return surface
 
+    def preview_sound_change(self, volume):
+        self.sound_manager.set_volume(volume/100.0)
+
+    def preview_music_change(self, volume):
+        self.music_manager.set_music_volume(volume/100.0)
+
     def move_selection(self, distance):
         event = pygame.event.Event(SOUND_EFFECT, message="menu_move")
         pygame.event.post(event)
@@ -384,6 +400,9 @@ class SettingsMenu:
     def click_selected(self, direction):
         self.items[self.selected].click(direction)
 
+    def register_finished_callback(self, callback):
+        self.callback = callback
+
     def finished(self):
         if self.finished_choice.get_value() == 0:
             self.settings['sound']['sound_enabled'] = self.sound_enabled.get_value()
@@ -392,6 +411,12 @@ class SettingsMenu:
             self.settings['sound']['music_volume'] = self.music_volume.get_value()/100.0
             self.settings['screen']['fullscreen'] = self.fullscreen.get_value()
             self.settings['screen']['resolution'] = self.resolution.get_value()
+
+        event = pygame.event.Event(SETTINGS_UPDATED)
+        pygame.event.post(event)
+
+        if self.callback != None:
+            self.callback()
 
 class Menu:
     def __init__(self, items):

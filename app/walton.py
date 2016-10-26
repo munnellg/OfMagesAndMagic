@@ -15,19 +15,24 @@ class Walton:
         pygame.mixer.pre_init(44100, -16, 1, 512)
         pygame.init()
 
+        # Load settings from JSON file
+        json_data=open(directories.SETTINGS_PATH).read()
+        self.settings = json.loads(json_data)
+        self.resolution_key = self.settings['screen']['resolution']
+        resolution = self.settings['valid_resolutions'][self.resolution_key]
+        self.resolution = (resolution['width'], resolution['height'])
+        self.title = self.settings['title']
+
         self.event_handler = EventHandler()
-        self.music_manager = MusicManager()
-        self.sound_manager = SoundManager()
+        self.music_manager = MusicManager(self.settings)
+        self.sound_manager = SoundManager(self.settings)
         self.event_handler.register_quit_listener(self.quit)
         self.event_handler.register_state_change_listener(self.music_manager.handle_state_change)
         self.event_handler.register_sound_effect_listener(self.sound_manager.handle_sound_effect)
 
-        # Load settings from JSON file
-        json_data=open(directories.SETTINGS_PATH).read()
-        self.settings = json.loads(json_data)
-        resolution = self.settings['valid_resolutions'][self.settings['screen']['resolution']]
-        self.resolution = (resolution['width'], resolution['height'])
-        self.title = self.settings['title']
+        self.event_handler.register_settings_update_listener(self.music_manager.handle_settings_update)
+        self.event_handler.register_settings_update_listener(self.sound_manager.handle_settings_update)
+
         self.quit = False
         self.states = {
             'main_menu' : main_menu.MainMenu
@@ -60,6 +65,10 @@ class Walton:
             pygame.display.flip()
 
     def __initialize_display(self):
+        self.resolution_key = self.settings['screen']['resolution']
+        resolution = self.settings['valid_resolutions'][self.resolution_key]
+        self.resolution = (resolution['width'], resolution['height'])
+
         if self.settings['screen']['fullscreen']:
             self.screen = pygame.display.set_mode(self.resolution, pygame.FULLSCREEN)
         else:
@@ -75,6 +84,11 @@ class Walton:
     def run(self):
         self.__initialize_display()
         self.__game_loop()
+
+    def update_settings(self, event):
+        if self.settings['screen']['resolution'] != self.resolution_key:
+            self.__initialize_display()
+            self.state.update_display()
 
     def quit(self, event):
         with open(directories.SETTINGS_PATH, "w") as f:
