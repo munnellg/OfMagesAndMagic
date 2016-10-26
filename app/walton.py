@@ -25,7 +25,8 @@ class Walton:
         # Load settings from JSON file
         json_data=open(directories.SETTINGS_PATH).read()
         self.settings = json.loads(json_data)
-        self.resolution = (self.settings['screen']['width'], self.settings['screen']['height'])
+        resolution = self.settings['valid_resolutions'][self.settings['screen']['resolution']]
+        self.resolution = (resolution['width'], resolution['height'])
         self.title = self.settings['title']
         self.quit = False
         self.states = {
@@ -86,5 +87,5 @@ class Walton:
 
         while self.sound_manager.still_playing():
             continue
-            
+
         self.quit = True

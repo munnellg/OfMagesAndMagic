@@ -16,7 +16,8 @@ class SoundManager:
 
             self.sound_effects = {
                 'menu_move'  : 'menu_move',
-                'menu_click' : 'menu_click'
+                'menu_click' : 'menu_click',
+                'menu_scroll': 'menu_scroll'
             }
 
         def play_sound(self, sound_name):

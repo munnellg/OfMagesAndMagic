@@ -6,9 +6,8 @@
         "sound_enabled": true
     }, 
     "screen": {
-        "width": 1024, 
-        "fullscreen": false, 
-        "height": 720
+        "fullscreen": true, 
+        "resolution": 2
     }, 
     "valid_resolutions": [
         {

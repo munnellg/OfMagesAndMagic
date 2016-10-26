@@ -2,6 +2,7 @@ COLOUR_BLUE  = (   0,    0, 255)
 COLOUR_RED   = ( 255,    0,   0)
 COLOUR_GREEN = (   0,  255,   0)
 COLOUR_WHITE = ( 255,  255, 255)
+COLOUR_GREY  = ( 128,  128, 128)
 COLOUR_BLACK = (   0,    0,   0)
 
 # Greens & Browns
