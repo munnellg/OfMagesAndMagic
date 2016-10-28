@@ -192,6 +192,12 @@ class MageManager:
     def is_conscious(self):
         return self.cur_hp > 0
 
+    def get_short_name(self):
+        if len(self.name)> 32:
+            return self.name[:28] + "..."
+        else:
+            return self.name
+
     def __str__(self):
         return "{:>15} - {:7} | HP: {:>3} | ATK: {:>3} | DEF: {:>3} | SPD: {:>3}".format(
                 self.name,

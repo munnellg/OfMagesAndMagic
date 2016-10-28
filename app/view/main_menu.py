@@ -3,7 +3,7 @@ from collections import defaultdict
 from app.resources import colours
 from app.resources import text_renderer
 from app.view import animations
-from app.view.menu import Menu, MenuItem, SettingsMenu, ButtonMenuItem
+from app.view.menu import Menu, MenuItem, SettingsMenu, ButtonMenuItem, TeamViewer
 
 class TitleBanner:
     def __init__(self, text):
@@ -40,6 +40,62 @@ class State:
     def exit_state(self):
         return
 
+class StateTeamView(State):
+    def __init__(self, main_menu):
+        self.parent     = main_menu.parent
+        self.main_menu  = main_menu
+        self.teams      = self.parent.teams
+
+        self.parent.event_handler.register_key_listener(self.handle_keypress)
+        self.title = text_renderer.render_title("Teams", colours.COLOUR_WHITE)
+        self.title_position = (
+            (self.parent.resolution[0] - self.title.get_width())// 2,
+            15
+        )
+
+        self.directions = {
+            pygame.K_RIGHT     : [1],
+            pygame.K_LEFT      : [-1],
+            pygame.K_ESCAPE    : [3],
+            pygame.K_BACKSPACE : [3]
+        }
+
+        self.animation = None
+
+        menu_region = (self.parent.resolution[0],
+            600
+        )
+        self.menu = TeamViewer(menu_region, self.teams)
+        self.menu.register_finished_callback(self.finished)
+
+    def render(self):
+        surface = pygame.Surface(self.parent.resolution)
+        surface.blit(self.title, self.title_position)
+        surface.blit(self.menu.render(), (0,(15 + self.title.get_height() + self.parent.resolution[1]-self.menu.height)//2))
+        return surface
+
+    def handle_keypress(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key in self.directions:
+                magnitude = self.directions[event.key]
+                self.animation = animations.Timeout(
+                    self.menu.move_selection,
+                    [magnitude[0]]
+                )
+        else:
+            if event.key in self.directions:
+                self.animation = None
+
+    def finished(self):
+        self.main_menu.set_state('default')
+
+    def update(self, delta_t):
+        if self.animation != None:
+            self.animation.animate(delta_t)
+
+    def exit_state(self):
+        self.parent.event_handler.unregister_key_listener(self.handle_keypress)
+
 class StateSettings(State):
     def __init__(self, main_menu):
         self.parent     = main_menu.parent
@@ -55,12 +111,14 @@ class StateSettings(State):
         )
 
         self.directions = {
-            pygame.K_UP     : [-1,  0],
-            pygame.K_DOWN   : [ 1,  0],
-            pygame.K_RIGHT  : [ 0,  1],
-            pygame.K_LEFT   : [ 0, -1],
-            pygame.K_SPACE  : [ 0,  2],
-            pygame.K_RETURN : [ 0,  2]
+            pygame.K_UP        : [-1,  0],
+            pygame.K_DOWN      : [ 1,  0],
+            pygame.K_RIGHT     : [ 0,  1],
+            pygame.K_LEFT      : [ 0, -1],
+            pygame.K_SPACE     : [ 0,  2],
+            pygame.K_RETURN    : [ 0,  2],
+            pygame.K_ESCAPE    : [ 0,  3],
+            pygame.K_BACKSPACE : [ 0,  3]
         }
         self.animation = None
         self.menu = SettingsMenu(self.settings)
@@ -206,7 +264,7 @@ class MainMenu:
 
         self.menu = Menu([
             ButtonMenuItem("Start", None),
-            ButtonMenuItem("View Teams", None),
+            ButtonMenuItem("View Teams", self.show_teams),
             ButtonMenuItem("Options", self.show_settings),
             ButtonMenuItem("Exit", self.trigger_exit)]
         )
@@ -214,7 +272,8 @@ class MainMenu:
         self.states = {
             "intro"    : StateAnimatedIntro,
             "settings" : StateSettings,
-            "default"  : StateDefault
+            "default"  : StateDefault,
+            "team_view" : StateTeamView,
         }
         self.compute_widget_positions()
 
@@ -246,6 +305,9 @@ class MainMenu:
 
     def show_settings(self):
         self.set_state('settings')
+
+    def show_teams(self):
+        self.set_state('team_view')
 
     def trigger_exit(self):
         event = pygame.event.Event(pygame.QUIT)

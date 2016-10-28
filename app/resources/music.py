@@ -1,6 +1,6 @@
 import pygame
 import os
-from directories import MUSIC_DIR
+from app.resources.directories import MUSIC_DIR
 
 class MusicManager:
 

@@ -8,7 +8,9 @@ from app.models.league import build_league
 from app.models.battle import Battle
 from app.resources.music import MusicManager
 from app.resources.sounds import SoundManager
+from app.resources.images import ImageManager
 from app.resources.event_handler import EventHandler, STATE_CHANGED
+from app.models import team
 
 class Walton:
     def __init__(self):
@@ -26,6 +28,7 @@ class Walton:
         self.event_handler = EventHandler()
         self.music_manager = MusicManager(self.settings)
         self.sound_manager = SoundManager(self.settings)
+        self.image_manager = ImageManager()
         self.event_handler.register_quit_listener(self.quit)
         self.event_handler.register_state_change_listener(self.music_manager.handle_state_change)
         self.event_handler.register_sound_effect_listener(self.sound_manager.handle_sound_effect)
@@ -40,8 +43,8 @@ class Walton:
         }
 
         SpellBook.load_spell_book(directories.MAGIC_PATH)
+        self.teams = team.load_teams(directories.TEAM_PATH)
 
-        # self.league = build_league()
         # self.battle = Battle(self.league[0], self.league[1])
 
     def __game_loop(self):

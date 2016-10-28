@@ -3,6 +3,7 @@ from app.resources import text_renderer
 from app.resources import colours
 from app.resources.sounds import SoundManager
 from app.resources.music import MusicManager
+from app.resources.images import ImageManager
 from app.resources.event_handler import SOUND_EFFECT, SETTINGS_UPDATED
 
 class MenuItem(object):
@@ -53,6 +54,9 @@ class ChoiceMenuItem(MenuItem):
 
     def get_value(self):
         return self.selected
+
+    def set_value(self, value):
+        self.selected = value
 
     def draw_focused(self, surface):
         if self.selected == 0:
@@ -324,6 +328,127 @@ class ButtonMenuItem:
     def render(self):
         return self.surface
 
+class TeamViewer:
+    def __init__(self, region, teams=[]):
+        self.width = region[0]
+        self.height = region[1]
+        self.callback = None
+        self.teams = teams
+        self.selected = 0
+
+        self.header_top    = 0
+        self.header_bottom = 45
+
+        self.banners = []
+        self.banner_width  = 0
+        self.banner_height = 0
+        self.team_member_height = 100
+        self.team_member_width  = 760
+        self.team_member_spacing = 10
+
+        self.move_list_offset =  (self.width - self.team_member_width)//2 + 450
+        self.hth_surface = text_renderer.render_text("HTH:", colours.COLOUR_WHITE)
+        self.atk_surface = text_renderer.render_text("ATK:", colours.COLOUR_WHITE)
+        self.def_surface = text_renderer.render_text("DEF:", colours.COLOUR_WHITE)
+        self.spd_surface = text_renderer.render_text("SPD:", colours.COLOUR_WHITE)
+
+        for team in teams:
+            self.banners.append(text_renderer.render_menu_item(team.get_short_name(), colours.COLOUR_WHITE))
+            if self.banners[-1].get_width() > self.banner_width:
+                self.banner_width = self.banners[-1].get_width()
+            if self.banners[-1].get_height() > self.banner_height:
+                self.banner_height = self.banners[-1].get_height()
+
+    def render(self):
+        surface = pygame.Surface((self.width, self.height))
+        if len(self.teams) == 0:
+            counter = text_renderer.render_menu_item("0/0", colours.COLOUR_WHITE)
+            surface.blit(counter, (self.width-counter.get_width()-30, (self.header_bottom-counter.get_height())//2))
+            return surface
+
+        counter = text_renderer.render_menu_item("{}/{}".format(self.selected+1, len(self.teams)), colours.COLOUR_WHITE)
+        surface.blit(counter, ((self.width+self.team_member_width)//2 - counter.get_width(), (self.header_bottom-counter.get_height())//2))
+
+        banner = self.banners[self.selected]
+        surface.blit(banner, ((self.width-banner.get_width())//2, (self.header_bottom-counter.get_height())//2))
+
+        x1 = (self.width-self.banner_width)//2 - 15
+        y1 = self.header_bottom//2
+
+        x2 = x1  + 5
+        y2 = y1 + 5
+
+        x3 = x2
+        y3 = y1 - 5
+
+        pygame.draw.polygon(surface, colours.COLOUR_WHITE,[(x1,y1), (x2,y2), (x3,y3)])
+
+        x1 = (self.width+self.banner_width)//2 + 15
+        x2 = x1  - 5
+        x3 = x2
+
+        pygame.draw.polygon(surface, colours.COLOUR_WHITE,[(x1,y1), (x2,y2), (x3,y3)])
+
+        for i in range(len(self.teams[self.selected])):
+            self.render_team_member(surface, self.teams[self.selected][i], i*(self.team_member_height+self.team_member_spacing) + self.header_bottom)
+
+        return surface
+
+    def render_team_member(self, surface, team_member, v_offset):
+        images = ImageManager()
+
+        h_offset = (self.width-self.team_member_width)//2
+        name = text_renderer.render_text(team_member.get_short_name(), colours.COLOUR_WHITE)
+        surface.blit(name, (h_offset + self.team_member_height + 10, v_offset))
+        surface.blit(self.hth_surface, (h_offset + self.team_member_height + 10, v_offset+self.team_member_height-60))
+
+        surface.blit(self.hth_surface, (h_offset + self.team_member_height + 10, v_offset+self.team_member_height-60))
+        stat_val = text_renderer.render_text(str(team_member.cur_hp), colours.COLOUR_WHITE)
+        surface.blit(stat_val, (h_offset + self.team_member_height + 80, v_offset+self.team_member_height-60))
+
+        surface.blit(self.atk_surface, (h_offset + self.team_member_height + 160, v_offset+self.team_member_height-60))
+        stat_val = text_renderer.render_text(str(team_member.get_stat("attack")), colours.COLOUR_WHITE)
+        surface.blit(stat_val, (h_offset + self.team_member_height + 230, v_offset+self.team_member_height-60))
+
+        surface.blit(self.def_surface, (h_offset + self.team_member_height + 10, v_offset+self.team_member_height-30))
+        stat_val = text_renderer.render_text(str(team_member.get_stat("defense")), colours.COLOUR_WHITE)
+        surface.blit(stat_val, (h_offset + self.team_member_height + 80, v_offset+self.team_member_height-30))
+
+        surface.blit(self.spd_surface, (h_offset + self.team_member_height + 160, v_offset+self.team_member_height-30))
+        stat_val = text_renderer.render_text(str(team_member.get_stat("speed")), colours.COLOUR_WHITE)
+        surface.blit(stat_val, (h_offset + self.team_member_height + 230, v_offset+self.team_member_height-30))
+
+        for i in range(len(team_member.spells)):
+            icon = images.get_image("{}_mage_icon".format(team_member.element.name.lower()))
+            surface.blit(icon, (h_offset, v_offset))
+            spell_val = text_renderer.render_text("{}. {}".format(i+1, team_member.spells[i]), colours.COLOUR_WHITE)
+            surface.blit(spell_val, (self.move_list_offset, v_offset+i*23))
+
+        pygame.draw.line(surface, colours.COLOUR_WHITE, (self.move_list_offset-10, v_offset), (self.move_list_offset-10, v_offset+self.team_member_height))
+        pygame.draw.line(surface, colours.COLOUR_WHITE, (h_offset+ self.team_member_height, v_offset), (h_offset + self.team_member_height, v_offset+self.team_member_height))
+        pygame.draw.rect(surface, colours.COLOUR_WHITE, ((self.width-self.team_member_width)//2, v_offset, self.team_member_width+1, self.team_member_height+1), 1)
+        return
+
+    def move_selection(self, distance):
+        if distance == 3:
+            event = pygame.event.Event(SOUND_EFFECT, message="menu_click")
+            pygame.event.post(event)
+            self.quit()
+        else:
+            event = pygame.event.Event(SOUND_EFFECT, message="menu_move")
+            pygame.event.post(event)
+            if len(self.teams) == 0:
+                return
+            self.selected += distance
+            self.selected %= len(self.teams)
+
+    def register_finished_callback(self, callback):
+        self.callback = callback
+
+    def quit(self):
+        if self.callback != None:
+            self.callback()
+
 class SettingsMenu:
     def __init__(self, settings):
         self.settings = settings
@@ -405,10 +530,17 @@ class SettingsMenu:
         self.items[self.selected].set_focused(True)
 
     def click_selected(self, direction):
-        self.items[self.selected].click(direction)
+        if direction == 3:
+            self.quit()
+        else:
+            self.items[self.selected].click(direction)
 
     def register_finished_callback(self, callback):
         self.callback = callback
+
+    def quit(self):
+        self.finished_choice.set_value(1)
+        self.finished_choice.click(2)
 
     def finished(self):
         if self.finished_choice.get_value() == 0:

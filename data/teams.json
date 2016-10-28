@@ -1,0 +1,16 @@
+{
+  "The Natty Nutters": [
+    "app.models.mages.michelle",
+    "app.models.mages.michael",
+    "app.models.mages.mark",
+    "app.models.mages.mark",
+    "app.models.mages.mary"
+  ],
+  "Jacob Bytes": [
+    "app.models.mages.james",
+    "app.models.mages.jane",
+    "app.models.mages.jill",
+    "app.models.mages.john",
+    "app.models.mages.john"
+  ]
+}
