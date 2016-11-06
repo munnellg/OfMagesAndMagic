@@ -4,7 +4,6 @@ import sys
 from app.resources import directories
 from app.view import main_menu
 from app.models.magic import SpellBook
-from app.models.league import build_league
 from app.models.battle import Battle
 from app.resources.music import MusicManager
 from app.resources.sounds import SoundManager

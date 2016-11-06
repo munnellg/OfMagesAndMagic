@@ -34,7 +34,9 @@ class Battle:
             self.battle = battle
 
         def update(self):
-            self.battle.play_next_move()
+            if not self.battle.is_battle_over():
+                self.battle.play_next_move()
+            
             if self.battle.is_battle_over():
                 self.battle.set_state('battle_over')
 
@@ -46,11 +48,12 @@ class Battle:
             return
 
     def __init__(self, team1, team2):
-        self.team1 = Team("Team 1", team1)
-        self.team2 = Team("Team 2", team2)
+        self.team1 = team1
+        self.team2 = team2
 
         self.cur_round = None
         self.round_counter = 0
+        self.max_round = 10
 
         self.cur_state = 'in_battle'
         self.states = {
@@ -77,23 +80,34 @@ class Battle:
 
     def start_new_round(self):
         self.cur_round = BattleRound(self.team1, self.team2)
+        self.round_counter += 1
 
     def is_in_battle(self):
         return self.cur_state == 'in_battle'
 
     def is_battle_over(self):
-        return self.get_winner() >= 0
+        return self.team2.is_defeated() or self.team1.is_defeated() or self.round_counter > self.max_round
 
     def get_winner(self):
         if self.team2.is_defeated():
-            return 0
+            return self.team1.get_short_name()
 
         if self.team1.is_defeated():
-            return 1
-        return -1
+            return self.team2.get_short_name()
+
+        if self.round_counter > self.max_round:
+            dt1 = [tm.get_sustained_damage() for tm in self.team1]
+            dt2 = [tm.get_sustained_damage() for tm in self.team2]
+            dt1 = sum(dt1)
+            dt2 = sum(dt2)
+
+            return self.team1.get_short_name() if dt1 < dt2 else self.team2.get_short_name()
+
+        return None
 
     def __str__(self):
-        text = str(self.team1)
+        text = "Round {}\n".format(self.round_counter) if not self.is_battle_over() else "{} won\n".format(self.get_winner())
+        text += str(self.team1)
         text += '\n'
         text += str(self.team2)
 

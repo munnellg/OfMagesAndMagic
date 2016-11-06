@@ -1,16 +1,16 @@
 {
-  "The Natty Nutters": [
-    "app.models.mages.michelle",
-    "app.models.mages.michael",
-    "app.models.mages.mark",
-    "app.models.mages.mark",
-    "app.models.mages.mary"
-  ],
-  "Jacob Bytes": [
-    "app.models.mages.james",
-    "app.models.mages.jane",
-    "app.models.mages.jill",
-    "app.models.mages.john",
-    "app.models.mages.john"
-  ]
+    "The Mystic Marvels": [
+        "teams.mystic_marvels.merlin",
+        "teams.mystic_marvels.allanon",
+        "teams.mystic_marvels.morrigan",
+        "teams.mystic_marvels.minerva",
+        "teams.mystic_marvels.gandalf"
+    ],
+    "Alpha Squad": [
+        "teams.alpha_squad.alpha1",
+        "teams.alpha_squad.alpha2",
+        "teams.alpha_squad.alpha3",
+        "teams.alpha_squad.alpha4",
+        "teams.alpha_squad.alpha5"
+    ]
 }

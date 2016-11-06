@@ -36,14 +36,14 @@ class MageManager:
             'speed'      : 0
         }
 
-        # Keep track of how our mage is faring healthwise
-        self.cur_hp = self.max_hp
-
         # Make sure we don't have too many spells
         self.impose_spell_limit()
 
         # Make sure our stats aren't too high
         self.impose_stat_limit()
+
+        # Keep track of how our mage is faring healthwise
+        self.cur_hp = self.max_hp
 
     # Returns requested stat without any stat modifiers being applied
     def get_base_stat(self, stat):
