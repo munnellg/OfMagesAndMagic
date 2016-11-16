@@ -4,6 +4,7 @@ from collections import defaultdict
 STATE_CHANGED    = pygame.USEREVENT + 1
 SOUND_EFFECT     = pygame.USEREVENT + 2
 SETTINGS_UPDATED = pygame.USEREVENT + 3
+SET_GAME_STATE   = pygame.USEREVENT + 4
 
 class EventHandler:
     def __init__(self):
@@ -16,7 +17,8 @@ class EventHandler:
             pygame.QUIT              : self.quit,
             STATE_CHANGED            : self.state_change,
             SOUND_EFFECT             : self.sound_effect,
-            SETTINGS_UPDATED         : self.settings_updated
+            SETTINGS_UPDATED         : self.settings_updated,
+            SET_GAME_STATE           : self.set_game_state
         }
 
         self.key_states = defaultdict(int)
@@ -27,7 +29,9 @@ class EventHandler:
         self.sound_effect_listeners = []
         self.mouse_button_listeners = []
         self.settings_listeners     = []
+        self.set_game_state_listeners = []
         self.quit_listeners = []
+        self.game_start_listeners = []
 
     def handle_event(self, event):
         if event.type in self.callbacks:
@@ -69,6 +73,12 @@ class EventHandler:
     def unregister_settings_update_listener(self, listener):
         self.settings_listeners.remove(listener)
 
+    def register_set_game_state_listener(self, listener):
+        self.set_game_state_listeners.append(listener)
+
+    def unregister_set_game_state_listener(self, listener):
+        self.set_game_state_listeners.remove(listener)
+
     def settings_updated(self, event):
         for listener in self.settings_listeners:
             listener(event)
@@ -100,4 +110,8 @@ class EventHandler:
 
     def quit(self, event):
         for listener in self.quit_listeners:
+            listener(event)
+
+    def set_game_state(self, event):
+        for listener in self.set_game_state_listeners:
             listener(event)

@@ -27,6 +27,9 @@ class Team(list):
         else:
             return self.team_name
 
+    def get_name(self):
+        return self.team_name
+
     def __str__(self):
         text = self.team_name + "\n"
 

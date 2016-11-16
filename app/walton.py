@@ -2,7 +2,7 @@ import pygame
 import json
 import sys
 from app.resources import directories
-from app.view import main_menu
+from app.view import main_menu, in_game
 from app.models.magic import SpellBook
 from app.models.battle import Battle
 from app.resources.music import MusicManager
@@ -29,6 +29,7 @@ class Walton:
         self.sound_manager = SoundManager(self.settings)
         self.image_manager = ImageManager()
         self.event_handler.register_quit_listener(self.quit)
+        self.event_handler.register_set_game_state_listener(self.update_state)
         self.event_handler.register_state_change_listener(self.music_manager.handle_state_change)
         self.event_handler.register_sound_effect_listener(self.sound_manager.handle_sound_effect)
 
@@ -38,20 +39,19 @@ class Walton:
 
         self.quit = False
         self.states = {
-            'main_menu' : main_menu.MainMenu
+            'main_menu' : main_menu.MainMenu,
+            'in_game'   : in_game.Game
         }
-
+        self.state_code = None
         SpellBook.load_spell_book(directories.MAGIC_PATH)
         self.teams = team.load_teams(directories.TEAM_PATH)
-
-        # self.battle = Battle(self.league[0], self.league[1])
 
     def __game_loop(self):
         clock = pygame.time.Clock()
         time  = pygame.time.get_ticks()
         pygame.mouse.set_visible(False)
 
-        self.set_state('main_menu')
+        self.set_state('main_menu', 'intro')
 
         while not self.quit:
             # Regulate framerate
@@ -78,9 +78,12 @@ class Walton:
             self.screen = pygame.display.set_mode(self.resolution)
         pygame.display.set_caption(self.settings['title'])
 
-    def set_state(self, state_code):
+    def set_state(self, state_code, state_seed=None):
         self.state_code = state_code
-        self.state = self.states[self.state_code](self)
+        if state_seed != None:
+            self.state = self.states[self.state_code](self, state_seed)
+        else:
+            self.state = self.states[self.state_code](self)
         event = pygame.event.Event(STATE_CHANGED, state=state_code)
         pygame.event.post(event)
 
@@ -93,6 +96,12 @@ class Walton:
             self.__initialize_display()
             self.state.update_display()
 
+    def start_game(self, event):
+        self.set_state('in_game')
+
+    def update_state(self, event):
+        self.set_state(event.state, event.seed)
+
     def quit(self, event):
         with open(directories.SETTINGS_PATH, "w") as f:
             json.dump(
@@ -102,6 +111,7 @@ class Walton:
                 ensure_ascii=False
             )
 
+        # Wait for any sound effects to stop playing
         while self.sound_manager.still_playing():
             continue
 

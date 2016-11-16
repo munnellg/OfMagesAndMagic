@@ -29,7 +29,8 @@ class MusicManager:
                 self.music[os.path.splitext(music_name)[0]] = music_name
 
             self.soundtrack = {
-                "main_menu" : "long_road"
+                "main_menu" : "long_road",
+                "in_game" : "long_road"
             }
 
         def play_song(self, song_name, volume = -1):
@@ -73,7 +74,8 @@ class MusicManager:
                 self.set_enabled(self.settings['sound']['music_enabled'])
 
         def handle_state_change(self, event):
-            self.now_playing = self.soundtrack[event.state]
+            if event.state in self.soundtrack:
+                self.now_playing = self.soundtrack[event.state]
             self.play_song(self.now_playing)
 
     instance = None

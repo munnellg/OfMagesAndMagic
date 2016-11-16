@@ -1,5 +1,6 @@
 import pygame
 from collections import defaultdict
+from app.resources.event_handler import SET_GAME_STATE
 from app.resources import colours
 from app.resources import text_renderer
 from app.view import animations
@@ -174,7 +175,7 @@ class StateAnimatedIntro(State):
         self.animation  = 0
 
         self.animations = [
-            animations.FadeIn(self),
+            animations.FadeIn(self.set_alpha),
         ]
 
         self.parent.event_handler.register_key_listener(self.handle_keypress)
@@ -213,6 +214,57 @@ class StateAnimatedIntro(State):
     def exit_state(self):
         self.skip()
         self.parent.event_handler.unregister_key_listener(self.handle_keypress)
+
+class StateAnimatedOutro(State):
+    def __init__(self, main_menu):
+        self.parent     = main_menu.parent
+        self.main_menu  = main_menu
+        self.title_banner = main_menu.title_banner
+        self.alpha = 255
+
+        self.animation  = 0
+
+        self.animations = [
+            animations.FadeOut(self.set_alpha, time=1500),
+        ]
+
+        self.parent.event_handler.register_key_listener(self.handle_keypress)
+
+    def set_alpha(self, alpha):
+        self.alpha = alpha
+
+    def render(self):
+        surface = pygame.Surface(self.parent.resolution)
+        surface.blit(self.title_banner.render(), self.main_menu.banner_position)
+        surface.blit(self.main_menu.menu.get_menu_surface(), self.main_menu.menu_position)
+
+        mask = pygame.Surface(self.parent.resolution, pygame.SRCALPHA)
+        mask.fill((0,0,0, 255-self.alpha))
+        surface.blit(mask, (0,0))
+
+        return surface
+
+    def update(self, delta_t):
+        if self.animation == len(self.animations):
+            self.exit_state()
+        elif self.animations[self.animation].finished():
+            self.animation += 1
+        else:
+            self.animations[self.animation].animate(delta_t)
+
+    def skip(self):
+        for animation in range(self.animation, len(self.animations)):
+            self.animations[animation].skip()
+        self.animation = len(self.animations)
+
+    def handle_keypress(self, event):
+        if event.type == pygame.KEYDOWN:
+            self.skip()
+
+    def exit_state(self):
+        self.parent.event_handler.unregister_key_listener(self.handle_keypress)
+        event = pygame.event.Event(SET_GAME_STATE, state="in_game", seed='league_view')
+        pygame.event.post(event)
 
 class StateDefault(State):
     def __init__(self, main_menu):
@@ -256,28 +308,29 @@ class StateDefault(State):
         self.parent.event_handler.unregister_key_listener(self.handle_keypress)
 
 class MainMenu:
-    def __init__(self, parent):
+    def __init__(self, parent, state_seed='default'):
         self.parent = parent
         self.event_handler = parent.event_handler
         self.title_banner = TitleBanner(self.parent.title)
         self.banner_position = (self.parent.resolution[0]//10, self.parent.resolution[1]//10)
 
         self.menu = Menu([
-            ButtonMenuItem("Start", None),
+            ButtonMenuItem("Start", self.start_game),
             ButtonMenuItem("View Teams", self.show_teams),
             ButtonMenuItem("Options", self.show_settings),
             ButtonMenuItem("Exit", self.trigger_exit)]
         )
 
         self.states = {
-            "intro"    : StateAnimatedIntro,
-            "settings" : StateSettings,
-            "default"  : StateDefault,
+            "intro"     : StateAnimatedIntro,
+            "settings"  : StateSettings,
+            "default"   : StateDefault,
             "team_view" : StateTeamView,
+            "outro"     : StateAnimatedOutro,
         }
         self.compute_widget_positions()
 
-        self.state_code = "intro"
+        self.state_code = state_seed
         self.state = self.states[self.state_code](self)
 
     def set_state(self, state):
@@ -308,6 +361,9 @@ class MainMenu:
 
     def show_teams(self):
         self.set_state('team_view')
+
+    def start_game(self):
+        self.set_state('outro')
 
     def trigger_exit(self):
         event = pygame.event.Event(pygame.QUIT)

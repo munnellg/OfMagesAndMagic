@@ -9,8 +9,8 @@ class Move:
         self.rank = self.mage.get_stat('speed')
 
     def execute(self):
-        self.mage.make_move(self.ally_team, self.enemy_team)        
-        print("")      
+        self.mage.make_move(self.ally_team, self.enemy_team)
+        print("")
 
 class BattleRound:
     def __init__(self, team1, team2):
@@ -22,10 +22,10 @@ class BattleRound:
 
     def next_move(self):
         self.move_order[self.cur_move].execute()
-        self.cur_move += 1        
-        while self.cur_move < len(self.move_order) and not self.move_order[self.cur_move].mage.is_conscious():            
+        self.cur_move += 1
+        while self.cur_move < len(self.move_order) and not self.move_order[self.cur_move].mage.is_conscious():
             self.cur_move += 1
-        
+
         return self.cur_move >= len(self.move_order)
 
 class Battle:
@@ -36,7 +36,7 @@ class Battle:
         def update(self):
             if not self.battle.is_battle_over():
                 self.battle.play_next_move()
-            
+
             if self.battle.is_battle_over():
                 self.battle.set_state('battle_over')
 
