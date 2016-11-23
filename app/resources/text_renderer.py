@@ -6,6 +6,8 @@ from app.resources import colours
 pygame.font.init()
 title_font = pygame.font.Font(FONT_ALEX_BRUSH, 84)
 menu_item_font = pygame.font.SysFont('serif', 32)
+huge_font = pygame.font.SysFont('serif', 64)
+large_font = pygame.font.SysFont('serif', 48)
 regular_font = pygame.font.SysFont('serif', 24)
 
 
@@ -14,6 +16,12 @@ def render_title(text, colour = colours.COLOUR_AMLSERVINYOUR):
 
 def render_menu_item(text, colour = colours.COLOUR_AMLSERVINYOUR):
     return menu_item_font.render(text, 1, colour)
+
+def render_huge_text(text, colour = colours.COLOUR_AMLSERVINYOUR):
+    return huge_font.render(text, 1, colour)
+
+def render_large_text(text, colour = colours.COLOUR_AMLSERVINYOUR):
+    return large_font.render(text, 1, colour)
 
 def render_text(text, colour = colours.COLOUR_AMLSERVINYOUR ):
     return regular_font.render(text, 1, colour)

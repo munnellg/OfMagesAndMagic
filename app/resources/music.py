@@ -30,7 +30,7 @@ class MusicManager:
 
             self.soundtrack = {
                 "main_menu" : "long_road",
-                "in_game" : "long_road"
+                "in_game" : "preliator"
             }
 
         def play_song(self, song_name, volume = -1):
@@ -75,8 +75,7 @@ class MusicManager:
 
         def handle_state_change(self, event):
             if event.state in self.soundtrack:
-                self.now_playing = self.soundtrack[event.state]
-            self.play_song(self.now_playing)
+                self.play_song(self.soundtrack[event.state])
 
     instance = None
 

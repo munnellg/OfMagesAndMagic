@@ -27,7 +27,7 @@ class ImageManager:
                 s = pygame.Surface((self.tile_size,self.tile_size))
                 s.fill((0,0,0))
                 return s
-                
+
             surface = self.images[image_name]
 
             rect = pygame.Rect(

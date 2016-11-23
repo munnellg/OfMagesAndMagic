@@ -51,7 +51,7 @@ class Walton:
         time  = pygame.time.get_ticks()
         pygame.mouse.set_visible(False)
 
-        self.set_state('main_menu', 'intro')
+        self.set_state('in_game', 'battle_view')
 
         while not self.quit:
             # Regulate framerate

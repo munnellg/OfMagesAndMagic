@@ -85,8 +85,8 @@ class MageManager:
     def make_move(self, allies, enemies):
         # Make sure we can make a spell to begin with
         if not self.is_conscious():
-            print("{} has fainted and cannot make a spell".format(self.name))
-            return
+            print("{} has fainted and cannot cast a spell".format(self.name))
+            return {"success" : False, "caster" :self, "reason" : "fainted"}
 
         print("{} is planning a spell".format(self.name))
 
@@ -100,12 +100,12 @@ class MageManager:
         # Test to ensure that the AI returned a tuple (valid choice)
         if type(decision) is not tuple:
             print("{} does nothing".format(self.name))
-            return
+            return {"success" : False, "caster" :self, "reason" : "does nothing"}
 
         # Make sure the AI chose a valid spell
         if decision[0] not in self.spells:
             print("{} does not know {}".format(self.name, decision[0]))
-            return
+            return {"success" : False, "caster" :self, "reason" : "unknown spell", "spell" : decision[0]}
 
         # Uplift the target to one of the MageManager objects.
         # Don't want to work with raw Mage object lest cheating happen
@@ -127,13 +127,15 @@ class MageManager:
                 # Invalid target! Don't do anything
                 print("Invalid target")
                 print("")
-                return
+                return {"success" : False, "caster" :self, "reason" : "invalid target"}
 
         # Cast the spell!
-        self.cast_spell(decision[0], target)
+        summary = self.cast_spell(decision[0], target)
+        summary["success"] = True
+        return summary
 
     def cast_spell(self, spell, target):
-        self.spellbook.cast_spell(spell, self, target)
+        return self.spellbook.cast_spell(spell, self, target)
 
     def restore_health(self, amount):
         if not self.is_conscious():

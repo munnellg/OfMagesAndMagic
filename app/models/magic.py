@@ -98,13 +98,25 @@ class AttackEffect(Effect):
 
     # Override parent apply effect method for our AttackEffect
     def apply_effect(self, caster, target):
+        summary = {
+            "type"               : "attack",
+            "super_effective"    : self.element.is_strong_against(target.element),
+            "not_very_effective" : self.element.is_weak_against(target.element),
+            "target" : target,
+            "evades" : False
+        }
         # Test for evasion and report if target dodged
         if self.target_evades(caster, target):
+            summary["evades"] = True
             print("{} evades the attack.".format(target.name))
         else:
+            critical = self.is_critical_hit()
+            summary["critical"] = critical
             # Apply damage
-            damage = self.compute_damage(caster, target, self.is_critical_hit())
+            damage = self.compute_damage(caster, target, critical)
+            summary["effect"] = damage
             target.take_damage(damage)
+        return summary
 
 class ReboundAttackEffect(AttackEffect):
     def __init__(self, element, power, accuracy, critical_hit_prob, rebound):
@@ -116,15 +128,28 @@ class ReboundAttackEffect(AttackEffect):
 
     # Override parent apply effect method for our AttackEffect
     def apply_effect(self, caster, target):
+        summary = {
+            "type"               : "rebound",
+            "super_effective"    : self.element.is_strong_against(target.element),
+            "not_very_effective" : self.element.is_weak_against(target.element),
+            "target" : target,
+            "evades" : False
+        }
         # Test for evasion and report if target dodged
         if self.target_evades(caster, target):
+            summary["evades"] = True
             print("{} evades the attack.".format(target.name))
         else:
+            critical = self.is_critical_hit()
+            summary["critical"] = critical
             # Apply damage
-            damage = self.compute_damage(caster, target, self.is_critical_hit())
+            damage = self.compute_damage(caster, target, critical)
             target.take_damage(damage)
+            summary["effect"] = damage
             print("{} is hit by the rebound".format(caster.name))
             caster.take_damage((damage*self.rebound)//100)
+            summary["rebound"] = (damage*self.rebound)//100
+        return summary
 
 class LeechAttackEffect(AttackEffect):
     def __init__(self, element, power, accuracy, critical_hit_prob, leech):
@@ -136,15 +161,28 @@ class LeechAttackEffect(AttackEffect):
 
     # Override parent apply effect method for our LeechAttackEffect
     def apply_effect(self, caster, target):
+        summary = {
+            "type"               : "leech",
+            "super_effective"    : self.element.is_strong_against(target.element),
+            "not_very_effective" : self.element.is_weak_against(target.element),
+            "target" : target,
+            "evades" : False
+        }
         # Test for evasion and report if target dodged
         if self.target_evades(caster, target):
+            summary["evades"] = True
             print("{} evades the attack.".format(target.name))
         else:
+            critical = self.is_critical_hit()
+            summary["critical"] = critical
             # Apply damage
-            damage = self.compute_damage(caster, target, self.is_critical_hit())
+            damage = self.compute_damage(caster, target, critical)
             target.take_damage(damage)
+            summary["effect"] = damage
             print("{} absorbs energy from {}".format(caster.name, target.name))
             caster.restore_health((damage*self.leech)//100)
+            summary["leech"] = (damage*self.leech)//100
+        return summary
 
 class BoostStatEffect(Effect):
     def __init__(self, element, power, stat):
@@ -152,7 +190,14 @@ class BoostStatEffect(Effect):
         self.stat = stat
 
     def apply_effect(self, caster, target):
+        summary = {
+            "type"   : "stat_boost",
+            "stat"   : self.stat,
+            "target" : target,
+            "effect" : self.power
+        }
         target.boost_stat(self.stat, self.power)
+        return summary
 
 class ReduceStatEffect(Effect):
     def __init__(self, element, power, accuracy, stat):
@@ -160,10 +205,21 @@ class ReduceStatEffect(Effect):
         self.stat = stat
 
     def apply_effect(self, caster, target):
+        summary = {
+            "type"   : "stat_reduce",
+            "stat"   : self.stat,
+            "target" : target,
+            "effect" : self.power
+        }
         target.reduce_stat(self.stat, self.power)
 
 class HealingEffect(Effect):
     def apply_effect(self, caster, target):
+        summary = {
+            "type"   : "healing",
+            "target" : target,
+            "effect" : self.power
+        }
         target.restore_health(self.power)
 
 ##########################################
@@ -183,15 +239,24 @@ class Spell(object):
         if isinstance(target, list):
             target = target[random.randint(0,len(target)-1)]
 
+        summary = {
+            "caster" : caster,
+            "result" : []
+        }
         for effect in self.effects:
-            effect.apply_effect(caster, target)
+            summary["result"].append(effect.apply_effect(caster, target))
+        return summary
 
 class GroupSpell(Spell):
     def cast(self, caster, targets):
+        summary = {
+            "caster" : caster,
+            "result" : []
+        }
         for target in targets:
             for effect in self.effects:
-                effect.apply_effect(caster, target)
-
+                summary["result"].append(effect.apply_effect(caster, target))
+        return summary
 ##########################################
 #                Commands                #
 ##########################################
@@ -208,9 +273,12 @@ class CastSpell(SpellCommand):
     def execute(self):
         if not self.spell.is_castable_by(self.caster):
             print("{} can't cast {}".format(self.caster.name, self.spell.name) )
+            return { "success" : False, "error" : "cannot cast", "spell" : self.spell}
         else:
             print("{} casts {}".format(self.caster.name, self.spell.name) )
-            self.spell.cast(self.caster, self.target)
+            result = self.spell.cast(self.caster, self.target)
+            result['spell'] = self.spell
+            return result
 
 ##########################################
 #                 Invoker                #
@@ -220,7 +288,7 @@ class Magic:
         return
 
     def execute(self, command):
-        command.execute()
+        return command.execute()
 
 ##########################################
 #                 Client                 #
@@ -249,7 +317,9 @@ class SpellBook:
     def cast_spell(self, spell, caster, target):
         spell = SpellBook.get_spell_object(spell)
         if spell != None:
-            self.magic.execute(CastSpell(spell, caster, target))
+            return self.magic.execute(CastSpell(spell, caster, target))
+        else:
+            return { "success" : False }
 
     @staticmethod
     def __load_elements(xml_tree):
@@ -279,7 +349,7 @@ class SpellBook:
         for spell in spells:
             # Get the name of the spell
             name    = spell.attrib['name']
-            
+
             # Determine the spell's element type (with error checking)
             element = spell.find('element')
 

@@ -225,7 +225,7 @@ class StateAnimatedOutro(State):
         self.animation  = 0
 
         self.animations = [
-            animations.FadeOut(self.set_alpha, time=1500),
+            animations.FadeOut(self.set_alpha, time=3000),
         ]
 
         self.parent.event_handler.register_key_listener(self.handle_keypress)
