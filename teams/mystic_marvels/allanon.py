@@ -2,13 +2,13 @@ class Mage:
     def __init__(self):
         self.name     = "Allanon"
 
-        self.health   = 50
+        self.health   = 0 #50
         self.attack   = 25
         self.defense  = 15
         self.speed    = 10
 
         self.element  = "Earth"
-        
+
         self.spells   = [
             "Bassault",
             "Landslide",
@@ -50,7 +50,7 @@ class Mage:
     def anticipate(self, allies, enemies):
         # Identify any targets that we're strong against
         weak_targets = self.find_weak_foes(enemies)
-        
+
         if len(weak_targets) > 2:
             # If we're strong against more than one enemy,
             # Do a group attack to hit as many enemies as possible
@@ -67,7 +67,7 @@ class Mage:
     def make_move(self, allies, enemies):
         # Identify any targets that we're strong against
         weak_targets = self.find_weak_foes(enemies)
-        
+
         if len(weak_targets) > 2:
             # If we're strong against more than one enemy,
             # Do a group attack to hit as many enemies as possible
@@ -110,4 +110,3 @@ class Mage:
                 # enemy with the highest defense
                 target = max(living, key=lambda enemy: enemy.speed)
                 return (self.spells[2], target)
-                

@@ -4,7 +4,7 @@ class Mage:
         self.health = 60
         self.attack = 10
         self.defense = 20
-        self.speed = 10
+        self.speed = 1
         self.element = "Earth"
 
         self.max_hp = self.health

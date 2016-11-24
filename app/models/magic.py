@@ -108,6 +108,7 @@ class AttackEffect(Effect):
         # Test for evasion and report if target dodged
         if self.target_evades(caster, target):
             summary["evades"] = True
+            summary["sustained"] = 0
             print("{} evades the attack.".format(target.name))
         else:
             critical = self.is_critical_hit()
@@ -115,7 +116,7 @@ class AttackEffect(Effect):
             # Apply damage
             damage = self.compute_damage(caster, target, critical)
             summary["effect"] = damage
-            target.take_damage(damage)
+            summary["sustained"] = target.take_damage(damage)
         return summary
 
 class ReboundAttackEffect(AttackEffect):
@@ -138,6 +139,7 @@ class ReboundAttackEffect(AttackEffect):
         # Test for evasion and report if target dodged
         if self.target_evades(caster, target):
             summary["evades"] = True
+            summary["sustained"] = 0
             print("{} evades the attack.".format(target.name))
         else:
             critical = self.is_critical_hit()
@@ -171,13 +173,14 @@ class LeechAttackEffect(AttackEffect):
         # Test for evasion and report if target dodged
         if self.target_evades(caster, target):
             summary["evades"] = True
+            summary["sustained"] = 0
             print("{} evades the attack.".format(target.name))
         else:
             critical = self.is_critical_hit()
             summary["critical"] = critical
             # Apply damage
             damage = self.compute_damage(caster, target, critical)
-            target.take_damage(damage)
+            summary["sustained"]=target.take_damage(damage)
             summary["effect"] = damage
             print("{} absorbs energy from {}".format(caster.name, target.name))
             caster.restore_health((damage*self.leech)//100)
@@ -212,6 +215,7 @@ class ReduceStatEffect(Effect):
             "effect" : self.power
         }
         target.reduce_stat(self.stat, self.power)
+        return summary
 
 class HealingEffect(Effect):
     def apply_effect(self, caster, target):
@@ -221,6 +225,7 @@ class HealingEffect(Effect):
             "effect" : self.power
         }
         target.restore_health(self.power)
+        return summary
 
 ##########################################
 #                 Spells                 #

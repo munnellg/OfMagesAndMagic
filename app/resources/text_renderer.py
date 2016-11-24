@@ -9,6 +9,7 @@ menu_item_font = pygame.font.SysFont('serif', 32)
 huge_font = pygame.font.SysFont('serif', 64)
 large_font = pygame.font.SysFont('serif', 48)
 regular_font = pygame.font.SysFont('serif', 24)
+small_font = pygame.font.SysFont('serif', 18)
 
 
 def render_title(text, colour = colours.COLOUR_AMLSERVINYOUR):
@@ -26,6 +27,9 @@ def render_large_text(text, colour = colours.COLOUR_AMLSERVINYOUR):
 def render_text(text, colour = colours.COLOUR_AMLSERVINYOUR ):
     return regular_font.render(text, 1, colour)
 
+def render_small_text(text, colour = colours.COLOUR_AMLSERVINYOUR ):
+    return small_font.render(text, 1, colour)
+
 def render_text_wrapped(surface, text, rect, color = colours.COLOUR_AMLSERVINYOUR, aa=True):
     rect = pygame.Rect(rect)
     y = rect.top
@@ -42,7 +46,7 @@ def render_text_wrapped(surface, text, rect, color = colours.COLOUR_AMLSERVINYOU
             break
 
         # determine maximum width of line
-        while self.regular_font.size(text[:i])[0] < rect.width and i < len(text):
+        while regular_font.size(text[:i])[0] < rect.width and i < len(text):
             i += 1
 
         # if we've wrapped the text, then adjust the wrap to the last word

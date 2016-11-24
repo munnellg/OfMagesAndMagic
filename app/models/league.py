@@ -2,7 +2,7 @@ from app.models.battle import Battle
 
 class League:
     def __init__(self, teams):
-        self.teams = teams      # Teams in the leage
+        self.teams = teams      # Teams in the league
         self.matches = []       # League match pairings
         self.current_match = 0  # The index of the current match to be played
         self.scores = {}        # Every team's scores in the league
@@ -16,7 +16,7 @@ class League:
 
         # Initialize scores for every team
         for team in self.teams:
-            self.scores[team.get_name()] = 0
+            self.scores[team.get_short_name()] = 0
 
     def get_matches_list(self):
         return self.matches
@@ -28,6 +28,8 @@ class League:
         return self.scores
 
     def record_result(self, battle):
+        self.scores[battle.get_winner()] += 1
+
         return
 
     def league_finished(self):

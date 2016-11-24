@@ -51,6 +51,30 @@ class FadeOut:
         self.value = self.end_value
         self.target(self.value)
 
+class MoveValue:
+    def __init__(self, target, start, end, args=[],  time=200):
+        self.start_value = start
+        self.end_value = end
+
+        self.time = time
+        self.elapsed = 0
+        self.value = start
+        self.args = args
+        self.target = target
+
+    def finished(self):
+        return self.elapsed >= self.time
+
+    def animate(self, delta_t):
+        self.elapsed += delta_t
+        self.value = self.start_value + float(self.end_value - self.start_value)*min(1, float(self.elapsed)/self.time)
+        self.target(self.value, *self.args)
+
+    def skip(self):
+        self.elapsed = self.time
+        self.value = self.end_value
+        self.target(self.value, *self.args)
+
 class Delay:
     def __init__(self, time=150):
         self.time = time
@@ -72,6 +96,7 @@ class FrameAnimate:
         self.frames = frames
         self.frame  = self.frames[0]
         self.trigger = self.compute_trigger_time( self.frame[1], self.frame[2] )
+        self.target(self.frame[0])
 
     def compute_trigger_time(self, normal, fuzz):
         return normal + random.uniform(0, 1)*fuzz - 1*(random.randint(0,1))
@@ -92,6 +117,12 @@ class FrameAnimate:
 
             self.elapsed = 0
             self.trigger = self.compute_trigger_time(self.frame[1], self.frame[2])
+
+    def reset(self):
+        self.elapsed = 0
+        self.frame  = self.frames[0]
+        self.trigger = self.compute_trigger_time( self.frame[1], self.frame[2] )
+        self.target(self.frame[0])
 
 class ChooseRandom:
     def __init__(self, target, options, time=150, fuzz=0):
@@ -119,6 +150,48 @@ class ChooseRandom:
                 upto += choice[1]
             self.elapsed = 0
             self.trigger = self.compute_trigger_time(self.time, self.fuzz)
+
+class MovePosition:
+    def __init__(self, start, finish, target, time=150):
+        self.start  = start
+        self.finish = finish
+        self.current = [self.start[0],self.start[1]]
+        self.time   = time
+        self.target = target
+        self.elapsed = 0
+
+    def animate(self, delta_t):
+        self.elapsed = min( self.elapsed+delta_t, self.time)
+        self.current[0] = self.start[0] + (self.finish[0]-self.start[0]) * min(1, float(self.elapsed)/self.time)
+        self.current[1] = self.start[1] + (self.finish[1]-self.start[1]) * min(1, float(self.elapsed)/self.time)
+        self.target(self.current)
+
+    def finished(self):
+        return self.elapsed >= self.time
+
+    def skip(self):
+        self.current = [self.finish[0],self.finish[1]]
+        self.elapsed = self.time
+        self.target(self.current)
+
+class DelayCallBack:
+    def __init__(self, target, args=[], time=150):
+        self.time = time
+        self.elapsed = 0
+        self.args = args
+        self.target = target
+
+    def animate(self, delta_t):
+        self.elapsed += delta_t
+        if self.elapsed >= self.time:
+            self.target(*self.args)
+
+    def finished(self):
+        return self.elapsed >= self.time
+
+    def skip(self):
+        self.elapsed = self.time
+        self.target(*self.args)
 
 class Timeout:
     def __init__(self, target, args=[], time=150):

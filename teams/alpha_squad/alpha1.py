@@ -2,15 +2,16 @@ class Mage:
     def __init__(self):
         self.name = "Adzy Cage"
         self.element = "Water"
-        
-        self.health = 30
-        self.attack = 30
-        self.defense = 20
-        self.speed = 20
+
+        self.health = 10
+        self.attack = 1
+        self.defense = 1
+        self.speed = 80
 
         self.spells = ["Water Jet", "Tidal Wave"]
-        
+
         return
 
-    def make_move(self, allies, enemies):        
+    def make_move(self, allies, enemies):
+        return None
         return ("Water Jet", enemies)

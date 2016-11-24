@@ -35,6 +35,9 @@ class Battle:
         self.team1 = team1
         self.team2 = team2
 
+        self.team1.reinitialize()
+        self.team2.reinitialize()
+
         self.cur_round = None
         self.round_counter = 0
         self.max_round = 10
@@ -72,8 +75,8 @@ class Battle:
             return self.team2.get_short_name()
 
         if self.round_counter > self.max_round:
-            dt1 = [tm.get_sustained_damage() for tm in self.team1]
-            dt2 = [tm.get_sustained_damage() for tm in self.team2]
+            dt1 = [tm.get_remaining_health_percentage() for tm in self.team1]
+            dt2 = [tm.get_remaining_health_percentage() for tm in self.team2]
             dt1 = sum(dt1)
             dt2 = sum(dt2)
 

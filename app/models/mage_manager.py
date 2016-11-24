@@ -22,11 +22,11 @@ class MageManager:
         self.spells = mage.spells
 
         # Store our mage's stats
-        self.max_hp = abs(mage.health)
+        self.max_hp = int(abs(mage.health))
         self.base_stats = {
-            'attack'     : abs(mage.attack),
-            'defense'    : abs(mage.defense),
-            'speed'      : abs(mage.speed)
+            'attack'     : int(abs(mage.attack)),
+            'defense'    : int(abs(mage.defense)),
+            'speed'      : int(abs(mage.speed))
         }
 
         # Keep track of modifiers applied to our stats
@@ -147,10 +147,13 @@ class MageManager:
 
         print("{} regained {} HP".format(self.name, delta))
 
+    def get_remaining_health_percentage(self):
+        return self.cur_hp/max(self.max_hp,1)
+
     def take_damage(self, damage):
         if not self.is_conscious():
             print("{} has fainted and cannot take more damage".format(self.name))
-            return
+            return 0
 
         delta = min(damage, self.cur_hp)
         self.cur_hp -= delta
@@ -159,6 +162,8 @@ class MageManager:
 
         if self.cur_hp == 0:
             print("{} fainted".format(self.name))
+
+        return delta
 
     def boost_stat(self, stat, amount):
         if not self.is_conscious():
