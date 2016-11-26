@@ -14,13 +14,13 @@ class Mage:
 
         self.name = "The Meme Master"
 
-        
+
         return
 
     def make_move(self, allies, enemies):
+        return None
 
 
-        
         # Tell our bot to do something!
         # This is where the smart part of your AI will go
         return ("Ice Breaker", enemies)

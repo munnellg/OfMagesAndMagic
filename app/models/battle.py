@@ -16,6 +16,7 @@ class BattleRound:
     def __init__(self, team1, team2):
         self.move_order = [Move(mage, team1, team2) for mage in team1 if mage.is_conscious()]
         self.move_order += [Move(mage, team2, team1) for mage in team2 if mage.is_conscious()]
+        random.shuffle(self.move_order)
         self.move_order.sort(key=lambda move: -move.rank)
 
         self.cur_move = 0
@@ -64,8 +65,19 @@ class Battle:
         self.cur_round = BattleRound(self.team1, self.team2)
         self.round_counter += 1
 
+    def get_round_number(self):
+        return self.round_counter
+
     def is_battle_over(self):
         return self.team2.is_defeated() or self.team1.is_defeated() or self.round_counter > self.max_round
+
+    def award_victory(self, team_no):
+        if team_no == 2:
+            for mage in self.team1:
+                mage.cur_hp = 0
+        elif team_no == 1:
+            for mage in self.team2:
+                mage.cur_hp = 0
 
     def get_winner(self):
         if self.team2.is_defeated():
@@ -79,8 +91,8 @@ class Battle:
             dt2 = [tm.get_remaining_health_percentage() for tm in self.team2]
             dt1 = sum(dt1)
             dt2 = sum(dt2)
-
-            return self.team1.get_short_name() if dt1 < dt2 else self.team2.get_short_name()
+            
+            return self.team1.get_short_name() if dt1 > dt2 else self.team2.get_short_name()
 
         return None
 

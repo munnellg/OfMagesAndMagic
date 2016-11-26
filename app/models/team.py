@@ -10,8 +10,11 @@ class Team(list):
 
     def initialize_team_members(self):
         for mage in self.constructors:
-            manager = MageManager(mage())
-            self.append(manager)
+            try:
+                manager = MageManager(mage())
+                self.append(manager)
+            except Exception,e:
+                print(e)
 
     def reinitialize(self):
         self[:] = []

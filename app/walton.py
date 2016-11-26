@@ -2,7 +2,7 @@ import pygame
 import json
 import sys
 from app.resources import directories
-from app.view import main_menu, in_game
+from app.view import main_menu, in_game, announce_winners
 from app.models.magic import SpellBook
 from app.models.battle import Battle
 from app.resources.music import MusicManager
@@ -24,6 +24,8 @@ class Walton:
         self.resolution = (resolution['width'], resolution['height'])
         self.title = self.settings['title']
 
+        self.winners = []
+
         self.event_handler = EventHandler()
         self.music_manager = MusicManager(self.settings)
         self.sound_manager = SoundManager(self.settings)
@@ -40,7 +42,8 @@ class Walton:
         self.quit = False
         self.states = {
             'main_menu' : main_menu.MainMenu,
-            'in_game'   : in_game.Game
+            'in_game'   : in_game.Game,
+            'announce_winners' : announce_winners.AnnounceWinners
         }
         self.state_code = None
         SpellBook.load_spell_book(directories.MAGIC_PATH)
@@ -51,7 +54,9 @@ class Walton:
         time  = pygame.time.get_ticks()
         pygame.mouse.set_visible(False)
 
-        self.set_state('in_game', 'battle_view')
+        # self.set_state('announce_winners', 'default')
+        self.set_state('main_menu', 'intro')
+        # self.set_state('in_game', 'battle_view')
 
         while not self.quit:
             # Regulate framerate
@@ -73,9 +78,9 @@ class Walton:
         self.resolution = (resolution['width'], resolution['height'])
 
         if self.settings['screen']['fullscreen']:
-            self.screen = pygame.display.set_mode(self.resolution, pygame.FULLSCREEN)
+            self.screen = pygame.display.set_mode(self.resolution, pygame.FULLSCREEN | pygame.DOUBLEBUF)
         else:
-            self.screen = pygame.display.set_mode(self.resolution)
+            self.screen = pygame.display.set_mode(self.resolution, pygame.DOUBLEBUF)
         pygame.display.set_caption(self.settings['title'])
 
     def set_state(self, state_code, state_seed=None):

@@ -103,7 +103,7 @@
 
         <!-- Power Attacks -->
         <spell name="Backdraft" type="single">
-            <effect type="rebound_attack" power="90" critical_hit_prob="4" accuracy="100" rebound="10"/>
+            <effect type="rebound_attack" power="90" critical_hit_prob="4" accuracy="100" rebound="50"/>
             <element>Fire</element>
         </spell>
 
@@ -145,7 +145,7 @@
 
         <!-- Power Attacks -->
         <spell name="Frost Storm" type="single">
-            <effect type="rebound_attack" power="90" critical_hit_prob="4" accuracy="100" rebound="10"/>
+            <effect type="rebound_attack" power="90" critical_hit_prob="4" accuracy="100" rebound="50"/>
             <element>Ice</element>
         </spell>
 
@@ -187,13 +187,13 @@
 
         <!-- Power Attacks -->
         <spell name="Monsoon" type="single">
-            <effect type="rebound_attack" power="90" critical_hit_prob="4" accuracy="100" rebound="10"/>
+            <effect type="rebound_attack" power="90" critical_hit_prob="4" accuracy="100" rebound="50"/>
             <element>Water</element>
         </spell>
 
         <!-- Specialization Attacks -->
         <spell name="Absorb" type="single">
-            <effect type="leech_attack" power="30" accuracy="100" critical_hit_prob="0" leech="10"/>
+            <effect type="leech_attack" power="30" accuracy="100" critical_hit_prob="0" leech="50"/>
             <element>Water</element>
         </spell>
         <spell name="Healing Wave" type="single">
@@ -229,7 +229,7 @@
 
         <!-- Power Attacks -->
         <spell name="Voltage Slam" type="single">
-            <effect type="rebound_attack" power="90" critical_hit_prob="4" accuracy="100" rebound="10"/>
+            <effect type="rebound_attack" power="90" critical_hit_prob="4" accuracy="100" rebound="50"/>
             <element>Thunder</element>
         </spell>
 

@@ -418,9 +418,9 @@ class TeamViewer:
         stat_val = text_renderer.render_text(str(team_member.get_stat("speed")), colours.COLOUR_WHITE)
         surface.blit(stat_val, (h_offset + self.team_member_height + 230, v_offset+self.team_member_height-30))
 
+        icon = images.get_tile("{}_mage".format(team_member.element.name.lower()), 0, 0)
+        surface.blit(icon, (h_offset, v_offset))
         for i in range(len(team_member.spells)):
-            icon = images.get_tile("{}_mage".format(team_member.element.name.lower()), 0, 0)
-            surface.blit(icon, (h_offset, v_offset))
             spell_val = text_renderer.render_text("{}. {}".format(i+1, team_member.spells[i]), colours.COLOUR_WHITE)
             surface.blit(spell_val, (self.move_list_offset, v_offset+i*23))
 

@@ -94,18 +94,26 @@ class MageManager:
         flattened_allies = [mage.flatten() for mage in allies]
         flattened_enemies = [mage.flatten() for mage in enemies]
 
-        # Get the AI to make a choice
-        decision = self.mage.make_move(flattened_allies, flattened_enemies)
+        try:
+            # Get the AI to make a choice
+            decision = self.mage.make_move(flattened_allies, flattened_enemies)
+        except Exception, e:
+            return {"success" : False, "caster" :self, "reason" : "does nothing"}
 
         # Test to ensure that the AI returned a tuple (valid choice)
         if type(decision) is not tuple:
             print("{} does nothing".format(self.name))
             return {"success" : False, "caster" :self, "reason" : "does nothing"}
 
+        spell = self.spellbook.get_spell_object(decision[0])
+
+        if spell == None:
+            return {"success" : False, "caster" :self, "reason" : "bad spell", "spell" : magic.Spell(decision[0], None, None)}
+
         # Make sure the AI chose a valid spell
         if decision[0] not in self.spells:
             print("{} does not know {}".format(self.name, decision[0]))
-            return {"success" : False, "caster" :self, "reason" : "unknown spell", "spell" : decision[0]}
+            return {"success" : False, "caster" :self, "reason" : "unknown spell", "spell" : spell}
 
         # Uplift the target to one of the MageManager objects.
         # Don't want to work with raw Mage object lest cheating happen
@@ -129,9 +137,12 @@ class MageManager:
                 print("")
                 return {"success" : False, "caster" :self, "reason" : "invalid target"}
 
-        # Cast the spell!
-        summary = self.cast_spell(decision[0], target)
-        summary["success"] = True
+        try:
+            # Cast the spell!
+            summary = self.cast_spell(decision[0], target)
+        except Exception, e:
+            print(e)
+            return {"success" : False, "caster" :self, "reason" : "does nothing"}
         return summary
 
     def cast_spell(self, spell, target):
@@ -148,7 +159,7 @@ class MageManager:
         print("{} regained {} HP".format(self.name, delta))
 
     def get_remaining_health_percentage(self):
-        return self.cur_hp/max(self.max_hp,1)
+        return float(self.cur_hp)/max(self.max_hp,1)
 
     def take_damage(self, damage):
         if not self.is_conscious():
@@ -168,7 +179,7 @@ class MageManager:
     def boost_stat(self, stat, amount):
         if not self.is_conscious():
             print("{} has fainted and is not affected".format(self.name))
-            return
+            return -1
 
         delta = min(amount, MageManager.modifier_minmax - self.stat_modifiers[stat])
         if delta == 0:
@@ -176,11 +187,12 @@ class MageManager:
         else:
             print("{}'s {} {}rose".format(self.name, stat, "sharply " if delta > 1 else ""))
             self.stat_modifiers[stat] += delta
+        return delta
 
     def reduce_stat(self, stat, amount):
         if not self.is_conscious():
             print("{} has fainted and is not affected".format(self.name))
-            return
+            return -1
 
         delta = min(amount, self.stat_modifiers[stat] + MageManager.modifier_minmax )
         if delta == 0:
@@ -188,6 +200,7 @@ class MageManager:
         else:
             print("{}'s {} {}fell".format(self.name, stat, "sharply " if delta > 1 else ""))
             self.stat_modifiers[stat] -= delta
+        return delta
 
     def flatten(self):
         self.mage.health  = self.cur_hp
@@ -200,8 +213,8 @@ class MageManager:
         return self.cur_hp > 0
 
     def get_short_name(self):
-        if len(self.name)> 32:
-            return self.name[:28] + "..."
+        if len(self.name)> 20:
+            return self.name[:17] + "..."
         else:
             return self.name
 

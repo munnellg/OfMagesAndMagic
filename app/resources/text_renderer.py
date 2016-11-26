@@ -5,6 +5,7 @@ from app.resources import colours
 
 pygame.font.init()
 title_font = pygame.font.Font(FONT_ALEX_BRUSH, 84)
+cursive_small = pygame.font.Font(FONT_ALEX_BRUSH, 48)
 menu_item_font = pygame.font.SysFont('serif', 32)
 huge_font = pygame.font.SysFont('serif', 64)
 large_font = pygame.font.SysFont('serif', 48)
@@ -29,6 +30,9 @@ def render_text(text, colour = colours.COLOUR_AMLSERVINYOUR ):
 
 def render_small_text(text, colour = colours.COLOUR_AMLSERVINYOUR ):
     return small_font.render(text, 1, colour)
+
+def render_cursive_small(text, colour = colours.COLOUR_AMLSERVINYOUR ):
+    return cursive_small.render(text, 1, colour)
 
 def render_text_wrapped(surface, text, rect, color = colours.COLOUR_AMLSERVINYOUR, aa=True):
     rect = pygame.Rect(rect)

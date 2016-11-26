@@ -2,7 +2,7 @@ class Mage:
     def __init__(self):
         self.name     = "Allanon"
 
-        self.health   = 0 #50
+        self.health   = 50
         self.attack   = 25
         self.defense  = 15
         self.speed    = 10

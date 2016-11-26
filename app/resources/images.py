@@ -1,6 +1,6 @@
 import pygame
 import os
-from directories import IMAGE_DIR
+from app.resources.directories import IMAGE_DIR
 
 class ImageManager:
 

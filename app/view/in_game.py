@@ -1,8 +1,9 @@
 import pygame
+import random
 import operator
 from app.resources.event_handler import SET_GAME_STATE
 from app.models.league import League
-from app.view.animations import Delay, FadeIn, FadeOut, ChooseRandom, FrameAnimate, MovePosition, DelayCallBack, MoveValue
+from app.view.animations import Delay, FadeIn, FadeOut, ChooseRandom, FrameAnimate, MovePosition, DelayCallBack, MoveValue, SequenceAnimation, ParallelAnimation
 from app.resources import text_renderer, colours
 from app.resources.images import ImageManager
 
@@ -86,9 +87,42 @@ def fill_gradient(surface, color, gradient, rect=None, vertical=True, forward=Tr
             )
             fn_line(surface, color, (col,y1), (col,y2))
 
+class RoundCounter:
+    def __init__(self, battle):
+        self.battle = battle
+        self.round_number = battle.get_round_number()
+
+        self.width  = 50
+        self.height = 50
+        self.pos = (0,0)
+        self.background = pygame.Surface((self.width, self.height))
+        fill_gradient(self.background, (0x00,0x4e,0x92), (0x00,0x04,0x28))
+        # pygame.draw.rect(self.background, colours.COLOUR_WHITE, (10, 10, self.width-20, self.height-20), 2)
+
+        self.digit = text_renderer.render_text("{}".format(self.round_number), colours.COLOUR_WHITE)
+
+    def render(self):
+        surface = self.background.copy()
+        surface.blit(self.digit,
+            (
+                (self.width - self.digit.get_width())/2,
+                (self.height - self.digit.get_height())/2
+            )
+        )
+        return surface
+
+    def get_pos(self):
+        return self.pos
+
+    def update(self, delta_t):
+        rn = self.battle.get_round_number()
+        if rn != self.round_number:
+            self.round_number = rn
+            self.digit = text_renderer.render_text("{}".format(self.round_number), colours.COLOUR_WHITE)
+
 class MessageBar:
     def __init__(self, parent):
-        self.width  = 600
+        self.width  = 650
         self.height = 64
         self.parent = parent
         self.show_pos = (self.parent.parent.resolution[0]//2 - self.width//2, -10)
@@ -121,6 +155,34 @@ class MessageBar:
         ))
         return surface
 
+    def animate_show(self):
+        return MovePosition(self.hide_pos, self.show_pos, self.set_pos)
+
+    def animate_hide(self):
+        return MovePosition(self.show_pos, self.hide_pos, self.set_pos)
+
+    def animate_set_message_show(self, message):
+        sequence = SequenceAnimation()
+        update_message = DelayCallBack(self.set_message, [message], time=0)
+        show = self.animate_show()
+
+        sequence.add_animation(update_message)
+        sequence.add_animation(show)
+
+        return sequence
+
+    def animate_hide_set_message_show(self, message):
+        sequence = SequenceAnimation()
+        hide = self.animate_hide()
+        update_message = DelayCallBack(self.set_message, [message], time=0)
+        show = self.animate_show()
+
+        sequence.add_animation(hide)
+        sequence.add_animation(update_message)
+        sequence.add_animation(show)
+
+        return sequence
+
 class MageSprite:
     def __init__(self, mage, direction, start, combat_zone):
         self.mage = mage
@@ -132,6 +194,8 @@ class MageSprite:
         self.pos = self.start
 
         self.sprite_sheet = self.mage.element.name.lower()+"_mage"
+
+        self.hiding = False
 
         self.animations = {
             "idle"       : [ FrameAnimate(self.set_frame, [
@@ -179,7 +243,10 @@ class MageSprite:
         self.set_state("idle" if self.mage.cur_hp > 0 else "dead")
 
     def flip(self):
-        self.direction = 1-self.direction
+        self.set_direction(1-self.direction)
+
+    def set_direction(self, direction):
+        self.direction = direction
 
     def set_pos(self, pos):
         self.pos = pos
@@ -187,8 +254,69 @@ class MageSprite:
     def update(self, delta_t):
         for animation in self.animations[self.state]:
             animation.animate(delta_t)
+
+    def hide(self):
+        self.hiding = True
+
+    def show(self):
+        self.hiding = False
+
     def render(self):
-        return self.image_manager.get_tile(self.sprite_sheet, self.frame, self.direction)
+        if not self.hiding:
+            return self.image_manager.get_tile(self.sprite_sheet, self.frame, self.direction)
+        return pygame.Surface((0,0))
+
+    def animate_move_start_to_combat(self):
+        walk = DelayCallBack(self.set_state, ['walking'], time=0)
+        move = MovePosition(self.start, self.combat_zone, self.set_pos, time=1000)
+        stop = DelayCallBack(self.set_state, ['idle'], time=0)
+
+        return SequenceAnimation([walk, move, stop])
+
+    def animate_turn_around(self):
+        return DelayCallBack(self.flip, time=0)
+
+    def animate_move_combat_to_start(self):
+        sequence = SequenceAnimation()
+        walk = DelayCallBack(self.set_state, ['walking'], time=0)
+        move = MovePosition(self.combat_zone, self.start, self.set_pos, time=1000)
+        stop = DelayCallBack(self.set_state, ['idle'], time=0)
+
+        sequence.add_animation(walk)
+        sequence.add_animation(move)
+        sequence.add_animation(stop)
+
+        return sequence
+
+    def animate_cast_spell(self):
+        return DelayCallBack(self.set_state, ['cast_spell'], time=0)
+
+    def animate_evade(self):
+        walk = DelayCallBack(self.set_state, ['walking'], time=0)
+        dodge_back = MovePosition(self.start, self.evasion_zone, self.set_pos, time=100)
+        dodge_forward = MovePosition(self.evasion_zone, self.start, self.set_pos, time=100)
+        idle = DelayCallBack(self.set_state, ['idle'], time=0)
+        return SequenceAnimation([walk, dodge_back, dodge_forward,idle])
+
+    def animate_faint(self):
+        return DelayCallBack(self.set_state, ['dead'], time=0)
+
+    def animate_take_damage(self, critical = False):
+        sequence = SequenceAnimation()
+        duration = 75
+        cycles   = 8
+
+        if critical:
+            duration/=2
+            cycles*=2
+
+        for i in range(cycles):
+            hide = DelayCallBack(self.hide, time=duration)
+            show = DelayCallBack(self.show, time=duration)
+            sequence.add_animation(hide)
+            sequence.add_animation(show)
+
+        return sequence
 
 class MageStatusWindow:
     def __init__(self, team1, team2, width, height):
@@ -290,6 +418,9 @@ class MageStatusWindow:
 
         return surface
 
+    def animate_update_health(self, mage):
+        return MoveValue(self.set_mage_health, self.display_data[mage]['hp'], mage.cur_hp, [mage], time=1000  )
+
 class BattleWindow:
     def __init__(self, battle, resolution):
         self.battle = battle
@@ -326,6 +457,19 @@ class BattleWindow:
         self.image_manager = ImageManager()
         self.stage = self.image_manager.get_image('battle_stage')
 
+    def restore_positions(self):
+        for mage in self.battle.team1:
+            sprite = self.team1_sprites[mage]['sprite']
+            sprite.set_pos(sprite.start)
+            sprite.set_direction(0)
+            sprite.show()
+
+        for mage in self.battle.team2:
+            sprite = self.team2_sprites[mage]['sprite']
+            sprite.set_pos(sprite.start)
+            sprite.set_direction(1)
+            sprite.show()
+
     def sync(self):
         for mage in self.sprites:
             mage.sync()
@@ -353,7 +497,7 @@ class BattleWindow:
         for mage in self.sprites:
             mage.update(delta_t)
 
-    def sync_mages(self):
+    def sync(self):
         for mage in self.sprites:
             if mage.mage.cur_hp == 0:
                 mage.set_state('dead')
@@ -366,7 +510,7 @@ class VersusBanner:
         self.team2_name = text_renderer.render_huge_text(team2, colours.COLOUR_WHITE)
         self.vs_text = text_renderer.render_large_text("Vs", colours.COLOUR_WHITE)
 
-        self.height = max(self.team1_name.get_height(), self.team2_name.get_height()) * 3
+        self.height = self.team1_name.get_height() + self.team2_name.get_height() + self.vs_text.get_height() + 20
         self.width  = max(self.team1_name.get_width(), self.team2_name.get_width())
 
     def render(self):
@@ -518,29 +662,41 @@ class StateLeagueView:
             MatchTable(self.league)
         ]
 
-        self.animations = [
-            FadeIn(self.set_alpha, time=3000),
-            Delay( time=3000 ),
-            FadeOut(self.set_alpha, time=500),
-            FadeIn(self.set_alpha,  time=500),
-            Delay( time=3000 ),
-            FadeOut(self.set_alpha, time=500)
-        ]
-        self.cur_animation = 0
+        self.animations = SequenceAnimation()
+        self.animations.add_animation(FadeIn(self.set_alpha, time=3000))
+
+        next_table = SequenceAnimation()
+        next_table.add_animation(Delay( time=3000 ))
+        next_table.add_animation(FadeOut(self.set_alpha, time=500))
+        next_table.add_animation(DelayCallBack(self.next_window, time=0))
+        next_table.add_animation(FadeIn(self.set_alpha, time=500))
+        self.animations.add_animation(next_table)
+
+        close = SequenceAnimation()
+        close.add_animation(Delay( time=3000 ))
+        close.add_animation(FadeOut(self.set_alpha, time=500))
+        self.animations.add_animation(close)
 
         self.alpha = 0
 
         self.parent.parent.event_handler.register_key_listener(self.handle_event)
 
-        self.elapsed = 0
         self.head_height = 145
+        self.table = 0
 
     def set_alpha(self, alpha):
         self.alpha = alpha
 
+    def next_window(self):
+        if self.league.finished():
+            if self.league.winners_chosen():
+                self.parent.trigger_exit_to_announce_winners()                
+        if not self.league.finished():
+            self.table += 1
+
     def render(self):
         surface = pygame.Surface(self.parent.resolution)
-        table = self.tables[int(self.cur_animation > 2)].render()
+        table = self.tables[self.table].render()
         x = (surface.get_width()-table.get_width())//2
         y = self.head_height
         surface.blit(table, (x,y))
@@ -551,23 +707,16 @@ class StateLeagueView:
 
         return surface
 
-    def show_next_table(self):
-        if self.cur_table < len(self.tables) - 1:
-            self.cur_table += 1
-
     def update(self, delta_t):
-        if self.cur_animation < len(self.animations):
-            self.animations[self.cur_animation].animate(delta_t)
-            if self.animations[self.cur_animation].finished():
-                self.cur_animation += 1
+        if not self.animations.finished():
+            self.animations.animate(delta_t)
         else:
             self.parent.set_state('battle_view')
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
-                if self.cur_animation < len(self.animations):
-                    self.animations[self.cur_animation].skip()
+                self.animations.skip_current()
             elif event.key == pygame.K_ESCAPE:
                 self.parent.trigger_exit_to_main()
 
@@ -581,6 +730,7 @@ class StateBattleStart:
         self.root.parent.event_handler.register_key_listener(self.handle_event)
         self.mage_status = self.parent.mage_status
         self.battle_window = self.parent.battle_window
+        self.round_counter = self.parent.round_counter
         self.versus_banner = VersusBanner(
             self.parent.battle.team1.get_short_name(),
             self.parent.battle.team2.get_short_name()
@@ -613,6 +763,8 @@ class StateBattleStart:
             window  = self.battle_window.render()
             status  = self.mage_status.render()
             window.blit(status, (0, window.get_height()-200))
+            round_count = self.round_counter.render()
+            window.blit(round_count, self.round_counter.get_pos())
             surface.blit(window, (0,0))
 
         mask = pygame.Surface(self.root.resolution, pygame.SRCALPHA)
@@ -650,9 +802,14 @@ class StateInBattle:
         self.root.parent.event_handler.register_key_listener(self.handle_event)
         self.battle_window = self.parent.battle_window
         self.mage_status = self.parent.mage_status
-        self.animations = []
+        self.round_counter = self.parent.round_counter
+        self.animations = SequenceAnimation()
+
+        self.paused_text = text_renderer.render_large_text("PAUSED", colours.COLOUR_WHITE)
+
         self.skip_turn = False
         self.skip_game = False
+        self.paused    = False
 
     def render(self):
         window  = self.battle_window.render()
@@ -660,31 +817,43 @@ class StateInBattle:
         status  = self.mage_status.render()
         window.blit(message, self.message_bar.get_pos())
         window.blit(status, (0, window.get_height()-200))
+        round_count = self.round_counter.render()
+        window.blit(round_count, self.round_counter.get_pos())
+        if self.paused:
+            window.blit(self.paused_text, (
+                (
+                    (window.get_width()-self.paused_text.get_width())/2,
+                    (window.get_height()-self.paused_text.get_height())/2 - self.paused_text.get_height()
+                )
+            ))
+
         return window
 
     def play_all_move_animations(self):
-        while len(self.animations) > 0:
-            for animation in self.animations[0]:
-                animation.skip()
-            self.animations = self.animations[1:]
+        self.animations.skip()
+
+    def toggle_pause(self):
+        self.paused = not self.paused
+
+    def skip_animations(self):
+        self.animations.cur_animation = len(self.animations.animations)
+        self.battle_window.restore_positions()
+        self.battle_window.sync()
+        self.mage_status.sync()
 
     def play_whole_game(self):
         result = self.parent.battle.play_next_move()
         while not result['finished']:
             result = self.parent.battle.play_next_move()
-        self.battle_window.sync_mages()
+        self.battle_window.sync()
+        self.mage_status.sync()
         self.match_over = True
 
-    def advance_move_animation(self, delta_t):
-        for animation in self.animations[0]:
-            animation.animate(delta_t)
-        self.animations[0] = [animation for animation in self.animations[0] if not animation.finished()]
-        if len(self.animations[0]) == 0:
-            self.animations = self.animations[1:]
-
     def update(self, delta_t):
+        if self.paused:
+            return
 
-        if len(self.animations) == 0:
+        if self.animations.finished():
             result = self.parent.battle.play_next_move()
             if result['finished']:
                 self.parent.league.record_result(self.parent.battle)
@@ -693,165 +862,281 @@ class StateInBattle:
                 self.process_move_result(result)
         else:
             if self.skip_turn or self.skip_game:
-                self.play_all_move_animations()
+                self.skip_animations()
                 self.skip_turn = False
 
                 if self.skip_game:
                     self.play_whole_game()
                     self.skip_game = False
             else:
-                self.advance_move_animation(delta_t)
+                self.animations.animate(delta_t)
 
         self.battle_window.update(delta_t)
+        self.round_counter.update(delta_t)
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 self.root.trigger_exit_to_main()
-            if event.key == pygame.K_SPACE:
-                self.skip_turn = True
-            if event.key == pygame.K_RETURN:
-                self.skip_game = True
+            elif event.key == pygame.K_p:
+                self.toggle_pause()
+            elif not self.paused:
+                if event.key == pygame.K_SPACE:
+                    self.skip_turn = True
+                elif event.key == pygame.K_RETURN:
+                    self.skip_game = True
+                elif event.key in [pygame.K_LEFT, pygame.K_1]:
+                    self.parent.battle.award_victory(1)
+                    self.skip_game = True
+                elif event.key in [pygame.K_RIGHT, pygame.K_2]:
+                    self.parent.battle.award_victory(2)
+                    self.skip_game = True
 
     def exit_state(self):
         self.root.parent.event_handler.unregister_key_listener(self.handle_event)
 
+    def animate_unknown_spell(self, move_result):
+        update_message_bar = self.message_bar.animate_hide_set_message_show (
+            "{} tries to cast {}".format(move_result['caster'].get_short_name(), move_result['spell'].name)
+        )
+        self.animations.add_animation(update_message_bar)
+        self.animations.add_animation(Delay(time=1000))
+
+        if move_result['reason'] == "unknown spell":
+            update_message_bar = self.message_bar.animate_hide_set_message_show (
+                "but {} does not know that spell".format(move_result['caster'].get_short_name())
+            )
+        elif move_result['reason'] == "cannot cast":
+            update_message_bar = self.message_bar.animate_hide_set_message_show (
+                "but {} is not master of {}".format(move_result['caster'].get_short_name(), move_result['spell'].element.name)
+            )
+        else:
+            update_message_bar = self.message_bar.animate_hide_set_message_show (
+                "but {} is not a spell".format(move_result['spell'].name)
+            )
+        self.animations.add_animation(update_message_bar)
+
+    def gen_do_nothing_string(self, mage):
+        text = random.choice([
+            "{} is distracted by a squirrel",
+            "{}'s spellbook is still at home",
+            "{} wants everyone to get along",
+            "The sun is in {}'s eyes",
+            "{} contemplates life",
+        ])
+
+        return text.format(mage)
+
     def animate_does_nothing(self, move_result):
-        self.animations += [
-            [MovePosition(self.message_bar.show_pos, self.message_bar.hide_pos, self.message_bar.set_pos)],
-            [DelayCallBack(self.message_bar.set_message,
-                ["{} gets distracted and does nothing".format(move_result['caster'].get_short_name())],
-                  time=0)],
-            [MovePosition(self.message_bar.hide_pos, self.message_bar.show_pos, self.message_bar.set_pos)],
-            [Delay(time=2000)],
-        ]
+        update_message_bar = self.message_bar.animate_hide_set_message_show (
+            self.gen_do_nothing_string(move_result['caster'].get_short_name())
+        )
+        self.animations.add_animation(update_message_bar)
+        self.animations.add_animation(Delay(time=1000))
 
     def process_move_failed(self, move_result):
-        if move_result['reason'] == "invalid target" or move_result['reason'] == "does nothing":
+        if move_result['reason'] in ["unknown spell", "bad spell", "cannot cast"]:
+            self.animate_unknown_spell(move_result)
+        else:
             self.animate_does_nothing(move_result)
 
     def process_move_succeed(self, move_result):
-        caster_sprite = self.battle_window.get_mage(move_result['caster'])
+        caster_sprite = self.battle_window.get_mage(move_result['caster'])['sprite']
 
-        self.animations += [
-            [MovePosition(self.message_bar.show_pos, self.message_bar.hide_pos, self.message_bar.set_pos)],
-            [DelayCallBack(self.message_bar.set_message,
-                ["{} casts {} ".format(move_result['caster'].get_short_name(), move_result['spell'].name)],
-                  time=0)],
-            [DelayCallBack(caster_sprite['sprite'].set_state, ['cast_spell'], time=0)],
-            [MovePosition(self.message_bar.hide_pos, self.message_bar.show_pos, self.message_bar.set_pos)],
-            [Delay(time=1000)]
-        ]
+        parallel = ParallelAnimation()
+
+        hide_message_bar = self.message_bar.animate_hide()
+        show_message = self.message_bar.animate_set_message_show(
+            "{} casts {} ".format(move_result['caster'].get_short_name(), move_result['spell'].name)
+        )
+        cast = caster_sprite.animate_cast_spell()
+
+        self.animations.add_animation(hide_message_bar)
+        parallel.add_animation(cast)
+        parallel.add_animation(show_message)
+        self.animations.add_animation(parallel)
+        self.animations.add_animation(Delay(time=1000))
 
         for result in move_result['result']:
-            self.process_spell_cast(result)
+            self.process_spell_cast(result, move_result['caster'])
 
-    def process_spell_cast(self, cast):
-        if cast['type'] == 'attack':
-            self.process_attack_spell(cast)
+    def process_spell_cast(self, cast, caster):
+        if cast['type'] in ['attack', "rebound", "leech"]:
+            self.process_attack_spell(cast, caster)
+        elif cast['type'] == "healing":
+            self.process_healing_spell(cast, caster)
+        elif cast['type'] == 'stat_reduce':
+            self.process_stat_reduce_spell(cast, caster)
+        elif cast['type'] == 'stat_boost':
+            self.process_stat_boost_spell(cast, caster)
 
-    def process_attack_spell(self, cast):
-        target_sprite = self.battle_window.get_mage(cast['target'])
+    def process_attack_spell(self, cast, caster):
+        target_sprite = self.battle_window.get_mage(cast['target'])['sprite']
+        caster_sprite = self.battle_window.get_mage(caster)['sprite']
 
         if cast['sustained'] == 0 and cast['target'].cur_hp == 0:
-            self.animations += [
-                [MovePosition(self.message_bar.show_pos, self.message_bar.hide_pos, self.message_bar.set_pos)],
-                [DelayCallBack(self.message_bar.set_message,
-                    ["{} is already unconscious".format(cast['target'].get_short_name())],
-                      time=0)],
-                [MovePosition(self.message_bar.hide_pos, self.message_bar.show_pos, self.message_bar.set_pos)],
-                [Delay(time=1000)]
-            ]
+            show_message = self.message_bar.animate_hide_set_message_show(
+                "{} is already unconscious".format(cast['target'].get_short_name())
+            )
+            self.animations.add_animation(show_message)
+            self.animations.add_animation(Delay(time=1000))
         elif cast['evades']:
-            self.animations += [
-                [MovePosition(self.message_bar.show_pos, self.message_bar.hide_pos, self.message_bar.set_pos)],
-                [DelayCallBack(self.message_bar.set_message,
-                    ["{} evades the attack".format(cast['target'].get_short_name())],
-                      time=0)],
-                [MovePosition(self.message_bar.hide_pos, self.message_bar.show_pos, self.message_bar.set_pos)],
-                [DelayCallBack(target_sprite['sprite'].set_state, ['walking'], time=0)],
-                [MovePosition(target_sprite['sprite'].start, target_sprite['sprite'].evasion_zone, target_sprite['sprite'].set_pos, time=100)],
-                [MovePosition(target_sprite['sprite'].evasion_zone, target_sprite['sprite'].start, target_sprite['sprite'].set_pos, time=100)],
-                [DelayCallBack(target_sprite['sprite'].set_state, ['idle'], time=0)],
-                [Delay(time=800)]
-            ]
+            show_message = self.message_bar.animate_hide_set_message_show(
+                "{} evades the attack".format(cast['target'].get_short_name())
+            )
+            dodge = target_sprite.animate_evade()
+
+            self.animations.add_animation(show_message)
+            self.animations.add_animation(dodge)
+            self.animations.add_animation(Delay(time=800))
         else:
-            self.animations += [
-                [MovePosition(self.message_bar.show_pos, self.message_bar.hide_pos, self.message_bar.set_pos)],
-                [DelayCallBack(self.message_bar.set_message,
-                    ["Hits {} ".format(cast['target'].get_short_name())],
-                      time=0)],
-                [MovePosition(self.message_bar.hide_pos, self.message_bar.show_pos, self.message_bar.set_pos)],
-                [Delay(time=200)],
-                [MoveValue(self.mage_status.set_mage_health, self.mage_status.get_mage_health(cast['target']), cast['target'].cur_hp, [cast['target']], time=1000  )]
-            ]
+            show_message = self.message_bar.animate_hide_set_message_show(
+                "Hits {} ".format(cast['target'].get_short_name())
+            )
+            update_stats = self.mage_status.animate_update_health(cast['target'])
+            take_damage = target_sprite.animate_take_damage(cast['critical'])
+            self.animations.add_animation(show_message)
+            self.animations.add_animation(take_damage)
+            self.animations.add_animation(update_stats)
+
             if cast['critical']:
-                self.animations += [
-                    [MovePosition(self.message_bar.show_pos, self.message_bar.hide_pos, self.message_bar.set_pos)],
-                    [DelayCallBack(self.message_bar.set_message,
-                        ["Critical Hit".format(cast['target'].get_short_name())],
-                          time=0)],
-                    [MovePosition(self.message_bar.hide_pos, self.message_bar.show_pos, self.message_bar.set_pos)],
-                    [Delay(time=1000)]
-                ]
+                show_message = self.message_bar.animate_hide_set_message_show(
+                    "Critical Hit"
+                )
+                self.animations.add_animation(show_message)
+                self.animations.add_animation(Delay(time=1000))
             if cast['super_effective']:
-                self.animations += [
-                    [MovePosition(self.message_bar.show_pos, self.message_bar.hide_pos, self.message_bar.set_pos)],
-                    [DelayCallBack(self.message_bar.set_message,
-                        ["It's super effective".format(cast['target'].get_short_name())],
-                          time=0)],
-                    [MovePosition(self.message_bar.hide_pos, self.message_bar.show_pos, self.message_bar.set_pos)],
-                    [Delay(time=1000)]
-                ]
+                show_message = self.message_bar.animate_hide_set_message_show(
+                    "It's super effective"
+                )
+                self.animations.add_animation(show_message)
+                self.animations.add_animation(Delay(time=1000))
             if cast['not_very_effective']:
-                self.animations += [
-                    [MovePosition(self.message_bar.show_pos, self.message_bar.hide_pos, self.message_bar.set_pos)],
-                    [DelayCallBack(self.message_bar.set_message,
-                        ["It's not very effective".format(cast['target'].get_short_name())],
-                          time=0)],
-                    [MovePosition(self.message_bar.hide_pos, self.message_bar.show_pos, self.message_bar.set_pos)],
-                    [Delay(time=1000)]
-                ]
+                show_message = self.message_bar.animate_hide_set_message_show(
+                    "It's not very effective"
+                )
+                self.animations.add_animation(show_message)
+                self.animations.add_animation(Delay(time=1000))
 
             if cast['sustained'] > 0 and cast['target'].cur_hp == 0:
-                self.animations += [
-                    [MovePosition(self.message_bar.show_pos, self.message_bar.hide_pos, self.message_bar.set_pos)],
-                    [DelayCallBack(self.message_bar.set_message,
-                        ["{} fainted".format(cast['target'].get_short_name())],
-                          time=0)],
-                    [MovePosition(self.message_bar.hide_pos, self.message_bar.show_pos, self.message_bar.set_pos)],
-                    [DelayCallBack(target_sprite['sprite'].set_state, ['dead'], time=0)],
-                ]
+                show_message = self.message_bar.animate_hide_set_message_show(
+                    "{} fainted".format(cast['target'].get_short_name())
+                )
+                faint = target_sprite.animate_faint()
+
+                self.animations.add_animation(show_message)
+                self.animations.add_animation(faint)
+
+            if cast['type'] == "leech":
+                show_message = self.message_bar.animate_hide_set_message_show(
+                    "{} absorbs {} HP".format(caster.get_short_name(), cast['leech'])
+                )
+
+                update_stats = self.mage_status.animate_update_health(caster)
+                self.animations.add_animation(show_message)
+                self.animations.add_animation(update_stats)
+
+            if cast['type'] == "rebound":
+                take_damage = caster_sprite.animate_take_damage()
+                show_message = self.message_bar.animate_hide_set_message_show(
+                    "{} is hit with the rebound".format(caster.get_short_name(), cast['rebound'])
+                )
+                update_stats = self.mage_status.animate_update_health(caster)
+                self.animations.add_animation(take_damage)
+                self.animations.add_animation(show_message)
+                self.animations.add_animation(update_stats)
+
+    def process_stat_boost_spell(self, cast, caster):
+        target_sprite = self.battle_window.get_mage(cast['target'])['sprite']
+        caster_sprite = self.battle_window.get_mage(caster)['sprite']
+
+        if cast['effect'] < 0:
+            show_message = self.message_bar.animate_hide_set_message_show(
+                "Spell has no effect on {}".format(cast['target'].get_short_name())
+            )
+            self.animations.add_animation(show_message)
+            self.animations.add_animation(Delay(time=1000))
+        elif cast['effect']==0:
+            show_message = self.message_bar.animate_hide_set_message_show(
+                "{}'s {} won't go any higher".format(cast['target'].get_short_name(), cast['stat'])
+            )
+            self.animations.add_animation(show_message)
+        else:
+            show_message = self.message_bar.animate_hide_set_message_show(
+                "{}'s {} rose".format(cast['target'].get_short_name(), cast['stat'])
+            )
+            self.animations.add_animation(show_message)
+
+    def process_stat_reduce_spell(self, cast, caster):
+        target_sprite = self.battle_window.get_mage(cast['target'])['sprite']
+        caster_sprite = self.battle_window.get_mage(caster)['sprite']
+
+        if cast['effect'] < 0:
+            show_message = self.message_bar.animate_hide_set_message_show(
+                "Spell has no effect on {}".format(cast['target'].get_short_name())
+            )
+            self.animations.add_animation(show_message)
+            self.animations.add_animation(Delay(time=1000))
+        elif cast['effect']==0:
+            show_message = self.message_bar.animate_hide_set_message_show(
+                "{}'s {} won't go any lower".format(cast['target'].get_short_name(), cast['stat'])
+            )
+            self.animations.add_animation(show_message)
+        else:
+            show_message = self.message_bar.animate_hide_set_message_show(
+                "{}'s {} fell".format(cast['target'].get_short_name(), cast['stat'])
+            )
+            self.animations.add_animation(show_message)
+
+    def process_healing_spell(self, cast, caster):
+        target_sprite = self.battle_window.get_mage(cast['target'])['sprite']
+        caster_sprite = self.battle_window.get_mage(caster)['sprite']
+
+        if cast['target'].cur_hp == 0:
+            show_message = self.message_bar.animate_hide_set_message_show(
+                "{} cannot be restored".format(cast['target'].get_short_name())
+            )
+            self.animations.add_animation(show_message)
+            self.animations.add_animation(Delay(time=1000))
+        else:
+            show_message = self.message_bar.animate_hide_set_message_show(
+                "{} regained {} HP".format(cast['target'].get_short_name(), cast['effect'])
+            )
+            update_stats = self.mage_status.animate_update_health(cast['target'])
+            self.animations.add_animation(show_message)
+            self.animations.add_animation(update_stats)
 
     def process_move_result(self, move_result):
+        self.animations = SequenceAnimation()
 
-        caster_sprite = self.battle_window.get_mage(move_result['caster'])
+        caster_sprite = self.battle_window.get_mage(move_result['caster'])['sprite']
 
-        self.message_bar.set_message(
-            "{} is planning a move".format(move_result['caster'].get_short_name())
-        )
-        self.animations += [
-            [MovePosition(self.message_bar.hide_pos, self.message_bar.show_pos, self.message_bar.set_pos)],
-            [DelayCallBack(caster_sprite['sprite'].set_state, ['walking'], time=0)],
-            [MovePosition(caster_sprite['sprite'].start, caster_sprite['sprite'].combat_zone, caster_sprite['sprite'].set_pos, time=1000)],
-            [DelayCallBack(caster_sprite['sprite'].set_state, ['idle'], time=0)],
-        ]
+        show_planning = self.message_bar.animate_set_message_show (
+            "{} is planning a move".format(move_result['caster'].get_short_name()
+        ))
+        move_combat = caster_sprite.animate_move_start_to_combat()
+
+        self.animations.add_animation(show_planning)
+        self.animations.add_animation(move_combat)
 
         if not move_result['success']:
             self.process_move_failed(move_result)
         else:
             self.process_move_succeed(move_result)
 
-        self.animations += [
-            [DelayCallBack(caster_sprite['sprite'].flip, time=0)],
-            [DelayCallBack(caster_sprite['sprite'].set_state, ['walking'], time=0)],
-            [MovePosition(caster_sprite['sprite'].combat_zone, caster_sprite['sprite'].start, caster_sprite['sprite'].set_pos, time=1000)],
-            [DelayCallBack(caster_sprite['sprite'].flip, time=0)],
-            [DelayCallBack(caster_sprite['sprite'].set_state, ['idle'], time=0)],
-            [MovePosition(self.message_bar.show_pos, self.message_bar.hide_pos, self.message_bar.set_pos)],
-            [DelayCallBack(self.battle_window.sync, time=0)],
-            [DelayCallBack(self.mage_status.sync, time=0)],
-        ]
+        face_team = caster_sprite.animate_turn_around()
+        move_home = caster_sprite.animate_move_combat_to_start()
+        face_enemies = caster_sprite.animate_turn_around()
+
+        self.animations.add_animation(face_team)
+        self.animations.add_animation(move_home)
+        self.animations.add_animation(face_enemies)
+
+        hide_message_bar = self.message_bar.animate_hide()
+        self.animations.add_animation(hide_message_bar)
+
+        self.animations.add_animation(DelayCallBack(self.battle_window.sync, time=0))
+        self.animations.add_animation(DelayCallBack(self.mage_status.sync, time=0))
 
 class StateBattleEnd:
     def __init__(self, parent, root):
@@ -860,6 +1145,8 @@ class StateBattleEnd:
         self.battle_window = self.parent.battle_window
         self.root.parent.event_handler.register_key_listener(self.handle_event)
         self.mage_status = self.parent.mage_status
+        self.round_counter = self.parent.round_counter
+
         self.battle = self.parent.battle
 
         self.winner = self.battle.get_winner()
@@ -867,12 +1154,12 @@ class StateBattleEnd:
         self.winner_text = text_renderer.render_huge_text(self.winner, colours.COLOUR_WHITE)
         self.victory_text = text_renderer.render_huge_text("Victory", colours.COLOUR_WHITE)
 
-        self.animations = [
-            FadeOut(self.set_game_alpha, time=1500),
-            Delay( time=1500 ),
-            FadeOut(self.set_overlay_alpha, time=500)
-        ]
-        self.cur_animation = 0
+        self.animations = SequenceAnimation()
+        self.animations.add_animation( Delay( time=1000 ) )
+        self.animations.add_animation( FadeOut(self.set_game_alpha, time=1500) )
+        self.animations.add_animation( Delay( time=1500 ) )
+        self.animations.add_animation( FadeOut(self.set_overlay_alpha, time=500))
+        self.animations.add_animation( Delay( time=1000 ) )
 
         self.game_alpha    = 255
         self.overlay_alpha = 255
@@ -887,6 +1174,8 @@ class StateBattleEnd:
         window  = self.battle_window.render()
         status  = self.mage_status.render()
         window.blit(status, (0, window.get_height()-200))
+        round_count = self.round_counter.render()
+        window.blit(round_count, self.round_counter.get_pos())
 
         mask = pygame.Surface(self.root.resolution, pygame.SRCALPHA)
         mask.fill((0,0,0, 255-self.game_alpha))
@@ -914,12 +1203,8 @@ class StateBattleEnd:
 
     def update(self, delta_t):
         self.battle_window.update(delta_t)
-
-        if self.cur_animation < len(self.animations):
-            self.animations[self.cur_animation].animate(delta_t)
-            if self.animations[self.cur_animation].finished():
-                self.cur_animation += 1
-        else:
+        self.animations.animate(delta_t)
+        if self.animations.finished():
             self.root.set_state('league_view')
 
     def handle_event(self, event):
@@ -927,8 +1212,7 @@ class StateBattleEnd:
             if event.key == pygame.K_ESCAPE:
                 self.root.trigger_exit_to_main()
             elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
-                for animation in self.animations:
-                    animation.skip()
+                self.animations.skip()
 
     def exit_state(self):
         self.root.parent.event_handler.unregister_key_listener(self.handle_event)
@@ -942,7 +1226,7 @@ class StateBattleView:
         self.message_bar = MessageBar(self)
         self.battle_window = BattleWindow(self.battle, self.parent.resolution)
         self.mage_status = MageStatusWindow( self.battle.team1, self.battle.team2, self.parent.resolution[0], 200 )
-
+        self.round_counter = RoundCounter(self.battle)
         self.states = {
             'intro'     : StateBattleStart,
             'in_battle' : StateInBattle,
@@ -972,7 +1256,7 @@ class Game:
     def __init__(self, parent, state_seed='league_view'):
         self.parent = parent
         self.resolution = self.parent.resolution
-        self.league = League(self.parent.teams)
+        self.league = League(self.parent.teams, 2)
 
         self.states = {
             'league_view' : StateLeagueView,
@@ -995,6 +1279,12 @@ class Game:
 
     def handle_event(self, event):
         self.state.handle_event(event)
+
+    def trigger_exit_to_announce_winners(self):
+        self.parent.winners = self.league.get_winners()
+        self.state.exit_state()
+        event = pygame.event.Event(SET_GAME_STATE, state="announce_winners", seed='default')
+        pygame.event.post(event)
 
     def trigger_exit_to_main(self):
         self.state.exit_state()

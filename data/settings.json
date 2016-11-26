@@ -1,14 +1,15 @@
 {
     "sound": {
+        "music_volume": 0.6, 
         "sound_volume": 0.9, 
-        "sound_enabled": true, 
         "music_enabled": false, 
-        "music_volume": 0.6
+        "sound_enabled": true
     }, 
     "screen": {
         "fullscreen": false, 
         "resolution": 0
     }, 
+    "title": "Of Mages and Magic", 
     "valid_resolutions": [
         {
             "width": 1024, 
@@ -22,6 +23,5 @@
             "width": 1920, 
             "height": 1080
         }
-    ], 
-    "title": "Of Mages and Magic"
+    ]
 }

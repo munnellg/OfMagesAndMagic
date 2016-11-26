@@ -205,3 +205,51 @@ class Timeout:
         if self.elapsed >= self.time:
             self.elapsed = 0
             self.target(*self.args)
+
+class ParallelAnimation:
+    def __init__(self, animations = None):
+        self.animations = animations if animations != None else []
+
+    def animate(self, delta_t):
+        for animation in self.animations:
+            animation.animate(delta_t)
+
+    def add_animation(self, animation):
+        self.animations.append(animation)
+
+    def finished(self):
+        for animation in self.animations:
+            if not animation.finished():
+                return False
+        return True
+
+    def skip(self):
+        for animation in self.animations:
+            if not animation.finished():
+                animation.skip()
+
+class SequenceAnimation:
+    def __init__(self, animations = None):
+        self.animations = animations if animations != None else []
+        self.cur_animation = 0
+
+    def animate(self, delta_t):
+        if self.cur_animation < len(self.animations):
+            self.animations[self.cur_animation].animate(delta_t)
+            if self.animations[self.cur_animation].finished():
+                self.cur_animation += 1
+
+    def finished(self):
+        return self.cur_animation >= len(self.animations)
+
+    def add_animation(self, animation):
+        self.animations.append(animation)
+
+    def skip_current(self):
+        if self.cur_animation < len(self.animations):
+            self.animations[self.cur_animation].skip()
+            self.cur_animation += 1
+
+    def skip(self):
+        for i in range(self.cur_animation, len(self.animations)):
+            self.animations[i].skip()

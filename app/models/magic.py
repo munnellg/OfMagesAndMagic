@@ -146,11 +146,17 @@ class ReboundAttackEffect(AttackEffect):
             summary["critical"] = critical
             # Apply damage
             damage = self.compute_damage(caster, target, critical)
-            target.take_damage(damage)
+            summary["sustained"]=target.take_damage(damage)
             summary["effect"] = damage
             print("{} is hit by the rebound".format(caster.name))
-            caster.take_damage((damage*self.rebound)//100)
-            summary["rebound"] = (damage*self.rebound)//100
+            if summary["sustained"] > 0:
+                rebound = (self.compute_damage(caster, caster)*self.rebound)//100
+                rebound = max(1, rebound)
+            else:
+                rebound = 0
+            caster.take_damage(rebound)
+            summary["rebound"] = rebound
+
         return summary
 
 class LeechAttackEffect(AttackEffect):
@@ -183,8 +189,10 @@ class LeechAttackEffect(AttackEffect):
             summary["sustained"]=target.take_damage(damage)
             summary["effect"] = damage
             print("{} absorbs energy from {}".format(caster.name, target.name))
-            caster.restore_health((damage*self.leech)//100)
-            summary["leech"] = (damage*self.leech)//100
+            if summary["sustained"] > 0:
+                leeched = max(1, (summary["sustained"]*self.leech)//100)
+                caster.restore_health(leeched)
+                summary["leech"] = leeched
         return summary
 
 class BoostStatEffect(Effect):
@@ -197,9 +205,9 @@ class BoostStatEffect(Effect):
             "type"   : "stat_boost",
             "stat"   : self.stat,
             "target" : target,
-            "effect" : self.power
+            "power" : self.power
         }
-        target.boost_stat(self.stat, self.power)
+        summary['effect'] = target.boost_stat(self.stat, self.power)
         return summary
 
 class ReduceStatEffect(Effect):
@@ -212,9 +220,9 @@ class ReduceStatEffect(Effect):
             "type"   : "stat_reduce",
             "stat"   : self.stat,
             "target" : target,
-            "effect" : self.power
+            "power"  : self.power
         }
-        target.reduce_stat(self.stat, self.power)
+        summary['effect'] = target.reduce_stat(self.stat, self.power)
         return summary
 
 class HealingEffect(Effect):
@@ -278,11 +286,12 @@ class CastSpell(SpellCommand):
     def execute(self):
         if not self.spell.is_castable_by(self.caster):
             print("{} can't cast {}".format(self.caster.name, self.spell.name) )
-            return { "success" : False, "error" : "cannot cast", "spell" : self.spell}
+            return { "caster": self.caster, "success" : False, "reason" : "cannot cast", "spell" : self.spell}
         else:
             print("{} casts {}".format(self.caster.name, self.spell.name) )
             result = self.spell.cast(self.caster, self.target)
             result['spell'] = self.spell
+            result["success"] = True
             return result
 
 ##########################################
@@ -405,6 +414,7 @@ class SpellBook:
     def get_element_object(identifier):
         if identifier not in SpellBook.elements:
             print("{} is not a real element".format(identifier))
+            return None
         else:
             return SpellBook.elements[identifier]
 
@@ -412,5 +422,6 @@ class SpellBook:
     def get_spell_object(identifier):
         if identifier not in SpellBook.spells:
             print("{} is not a real spell".format(identifier))
+            return None
         else:
             return SpellBook.spells[identifier]

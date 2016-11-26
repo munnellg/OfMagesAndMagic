@@ -3,15 +3,17 @@ class Mage:
         self.name = "Adzy Cage"
         self.element = "Water"
 
-        self.health = 10
-        self.attack = 1
-        self.defense = 1
-        self.speed = 80
+        self.health = 50
+        self.attack = 20
+        self.defense = 10
+        self.speed = 20
 
-        self.spells = ["Water Jet", "Tidal Wave"]
+        self.spells = ["Monsoon", "Absorb", "Water Jet", "Tidal Wave"]
 
         return
 
     def make_move(self, allies, enemies):
-        return None
-        return ("Water Jet", enemies)
+        for enemy in enemies:
+            if enemy.element in ["Earth", "Fire"] and enemy.health > 0:
+                return ("Absorb", enemy)
+        return ("Absorb", enemies)
