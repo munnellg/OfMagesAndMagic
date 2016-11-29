@@ -8,7 +8,7 @@ from app.models.battle import Battle
 from app.resources.music import MusicManager
 from app.resources.sounds import SoundManager
 from app.resources.images import ImageManager
-from app.resources.event_handler import EventHandler, STATE_CHANGED
+from app.resources.event_handler import EventHandler, STATE_CHANGED, MUSIC_STOPPED
 from app.models import team
 
 class Walton:
@@ -30,8 +30,12 @@ class Walton:
         self.music_manager = MusicManager(self.settings)
         self.sound_manager = SoundManager(self.settings)
         self.image_manager = ImageManager()
+
+        self.music_manager.set_music_stopped_event(MUSIC_STOPPED)
+
         self.event_handler.register_quit_listener(self.quit)
         self.event_handler.register_set_game_state_listener(self.update_state)
+        self.event_handler.register_music_stopped_listener(self.music_manager.handle_song_stopped)
         self.event_handler.register_state_change_listener(self.music_manager.handle_state_change)
         self.event_handler.register_sound_effect_listener(self.sound_manager.handle_sound_effect)
 

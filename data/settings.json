@@ -1,8 +1,8 @@
 {
     "sound": {
-        "music_volume": 0.6, 
+        "music_volume": 0.7, 
         "sound_volume": 0.9, 
-        "music_enabled": false, 
+        "music_enabled": true, 
         "sound_enabled": true
     }, 
     "screen": {

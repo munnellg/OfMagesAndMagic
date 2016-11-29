@@ -690,7 +690,7 @@ class StateLeagueView:
     def next_window(self):
         if self.league.finished():
             if self.league.winners_chosen():
-                self.parent.trigger_exit_to_announce_winners()                
+                self.parent.trigger_exit_to_announce_winners()
         if not self.league.finished():
             self.table += 1
 
@@ -1288,5 +1288,5 @@ class Game:
 
     def trigger_exit_to_main(self):
         self.state.exit_state()
-        event = pygame.event.Event(SET_GAME_STATE, state="main_menu", seed='default')
+        event = pygame.event.Event(SET_GAME_STATE, state="main_menu", seed='intro')
         pygame.event.post(event)

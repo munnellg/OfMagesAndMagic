@@ -4,6 +4,7 @@ from app.resources.event_handler import SET_GAME_STATE
 from app.resources import colours
 from app.resources import text_renderer
 from app.view import animations
+from app.resources.music import MusicManager
 from app.view.menu import Menu, MenuItem, SettingsMenu, ButtonMenuItem, TeamViewer
 
 class TitleBanner:
@@ -222,11 +223,15 @@ class StateAnimatedOutro(State):
         self.title_banner = main_menu.title_banner
         self.alpha = 255
 
-        self.animation  = 0
+        self.music_manager = MusicManager()
+        self.volume = self.music_manager.get_music_volume()
 
-        self.animations = [
-            animations.FadeOut(self.set_alpha, time=3000),
-        ]
+        fade = animations.ParallelAnimation()
+        fade_display = animations.FadeOut(self.set_alpha, time=3000)
+        fade_sound = animations.MoveValue(self.music_manager.set_music_volume, self.volume, 0,  time=3000)
+        fade.add_animation(fade_display)
+        fade.add_animation(fade_sound)
+        self.animations = fade
 
         self.parent.event_handler.register_key_listener(self.handle_keypress)
 
@@ -245,17 +250,13 @@ class StateAnimatedOutro(State):
         return surface
 
     def update(self, delta_t):
-        if self.animation == len(self.animations):
+        if self.animations.finished():
             self.exit_state()
-        elif self.animations[self.animation].finished():
-            self.animation += 1
         else:
-            self.animations[self.animation].animate(delta_t)
+            self.animations.animate(delta_t)
 
     def skip(self):
-        for animation in range(self.animation, len(self.animations)):
-            self.animations[animation].skip()
-        self.animation = len(self.animations)
+        self.animations.skip()
 
     def handle_keypress(self, event):
         if event.type == pygame.KEYDOWN:

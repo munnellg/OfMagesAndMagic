@@ -550,7 +550,7 @@ class SettingsMenu:
             self.settings['sound']['music_volume'] = self.music_volume.get_value()/100.0
             self.settings['screen']['fullscreen'] = self.fullscreen.get_value()
             self.settings['screen']['resolution'] = self.resolution.get_value()
-
+            
         event = pygame.event.Event(SETTINGS_UPDATED)
         pygame.event.post(event)
 
