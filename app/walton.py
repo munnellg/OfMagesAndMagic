@@ -13,7 +13,7 @@ from app.models import team
 
 class Walton:
     def __init__(self):
-        pygame.mixer.pre_init(44100, -16, 1, 512)
+        pygame.mixer.pre_init(44100, -16, 1, 2048)
         pygame.init()
 
         # Load settings from JSON file

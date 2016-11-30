@@ -33,7 +33,7 @@ class MusicManager:
 
             self.soundtrack = {
                 "main_menu" : [ "long_road" ],
-                "in_game"   : [ "preliator", "lotr", "ff7", "epic", "ff8", "skyrim" ]
+                "in_game"   : [ "preliator", "killers", "ff8", "skyrim" ]
             }
 
         def play_song(self, song_name, volume = -1):

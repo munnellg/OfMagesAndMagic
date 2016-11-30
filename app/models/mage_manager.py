@@ -63,7 +63,7 @@ class MageManager:
 
     def impose_spell_limit(self):
         if len(self.spells) > MageManager.spell_limit:
-            print("{} has too many spells. Reducing to {}".format(self.name, MageManager.spell_limit))
+            print("{} has too many spells. Reducing to {}".format(self.get_short_name(), MageManager.spell_limit))
             self.spells = self.spells[:MageManager.spell_limit]
 
     # Returns requested stat modifier without the base stat

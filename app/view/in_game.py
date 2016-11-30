@@ -1,6 +1,7 @@
 import pygame
 import random
 import operator
+from collections import namedtuple
 from app.resources.event_handler import SET_GAME_STATE
 from app.models.league import League
 from app.view.animations import Delay, FadeIn, FadeOut, ChooseRandom, FrameAnimate, MovePosition, DelayCallBack, MoveValue, SequenceAnimation, ParallelAnimation
@@ -183,10 +184,102 @@ class MessageBar:
 
         return sequence
 
+class SpellSprite:
+    def __init__(self, sprite_sheet, has_direction, relative_position, n_frames, anim_width):
+        self.sprite_sheet      = sprite_sheet
+        self.has_direction     = has_direction
+        self.relative_position = relative_position
+        self.n_frames      = n_frames
+        self.anim_width    = anim_width
+        self.position      = (0,0)
+        self.direction     = 0
+        self.depth         = 0
+        self.hidden        = True
+
+        self.image_manager = ImageManager()
+        self.frame         = 0
+
+    def get_pos(self):
+        return self.position
+
+    def render(self):
+        if not self.hidden:
+            return self.image_manager.get_tile(self.sprite_sheet, self.frame, self.direction)
+        else:
+            return pygame.Surface((0,0))
+
+    def set_frame(self, frame):
+        self.frame = int(frame)
+
+    def fix_target(self, target):
+        self.position     = [target.pos[0], target.pos[1]]
+        self.direction    = 1-target.direction if self.has_direction else 0
+        self.depth        = target.depth+1
+        self.position[0] += self.anim_width*(self.relative_position*self.direction - self.relative_position*(1-self.direction))
+
+    def show(self):
+        self.hidden = False
+
+    def hide(self):
+        self.hidden = True
+
+    def sync(self):
+        self.hidden = True
+
+    def update(self, delta_t):
+        return
+
+    def set_animation(self, key, animation):
+        self.animations[key] = animation
+
+    def animate_cast(self, target):
+        print(1000 * self.n_frames/8.0)
+        move      = DelayCallBack(self.fix_target, [target], time=0)
+        show_self = DelayCallBack(self.show, time=0)
+        animate   = MoveValue(self.set_frame, 0, self.n_frames, time=(1000 * self.n_frames/8.0))
+        hide_self = DelayCallBack(self.hide, time=0)
+
+        return SequenceAnimation([move, show_self, animate, hide_self])
+
+class SpellFactory:
+    IN_FRONT =  1
+    OVERLAY  =  0
+    BEHIND   = -1
+
+    def __init__(self):
+        Blueprint = namedtuple('Blueprint', ['sprite_sheet', 'has_direction', 'position', 'n_frames', 'anim_width'], verbose=False)
+        self.spells = {
+            "Rock Smash"      : Blueprint("rock_smash",      False, self.OVERLAY,  8, 100),
+            "Bassault"        : Blueprint("bassault",        True,  self.IN_FRONT, 8,  70),
+            "Landslide"       : Blueprint("landslide",       False, self.OVERLAY,  8, 100),
+            "Granite Armour"  : Blueprint("granite_armour",  False, self.OVERLAY,  8, 100),
+            "Fracture"        : Blueprint("fracture",        False, self.OVERLAY,  8, 100),
+            "Stalactite Drop" : Blueprint("stalactite_drop", False, self.OVERLAY,  8, 100),
+            "Blizzard"        : Blueprint("blizzard",        False, self.OVERLAY,  8, 100),
+            "Chill Strike"    : Blueprint("chill_strike",    True,  self.IN_FRONT, 8, 100),
+            "Frostbite"       : Blueprint("frostbite",       False, self.OVERLAY,  8, 100),
+            "Glacier"         : Blueprint("glacier",         False, self.OVERLAY,  8, 100),
+            "Ice Breaker"     : Blueprint("ice_breaker",     False, self.OVERLAY,  8, 100),
+            "Frost Storm"     : Blueprint("frost_storm",     False, self.OVERLAY,  8, 100),
+            "Ice Cage"        : Blueprint("ice_cage",        False, self.OVERLAY,  8, 100),
+            "Ice Wall"        : Blueprint("ice_wall",        False, self.OVERLAY,  8, 100),
+        }
+
+    def assemble(self, blueprint):
+        return SpellSprite(blueprint.sprite_sheet, blueprint.has_direction, blueprint.position, blueprint.n_frames, blueprint.anim_width)
+
+    def build_spell(self, spell_id):
+        if spell_id not in self.spells:
+            return None
+        else:
+            return self.assemble(self.spells[spell_id])
+
 class MageSprite:
-    def __init__(self, mage, direction, start, combat_zone):
+    def __init__(self, mage, direction, start, combat_zone, depth):
         self.mage = mage
         self.direction = direction
+
+        self.depth = depth
 
         self.start = start
         self.combat_zone = combat_zone
@@ -433,46 +526,72 @@ class BattleWindow:
             5*65
         )
 
+        spell_factory = SpellFactory()
         self.sprites = []
+        self.spells = {}
+
         i = 0
         self.team1_sprites = { }
         for mage in self.battle.team1:
-            self.team1_sprites[mage] = {
-                "sprite" : MageSprite(mage, 0, (self.battle_area.x-i*15, self.battle_area.y + i*65),
-                ( self.battle_area.x+ self.battle_area.w/2 - 50, self.battle_area.y+ self.battle_area.h/2 - 50))
-            }
-            self.sprites.append(self.team1_sprites[mage]["sprite"])
+            self.team1_sprites[mage] = MageSprite(
+                    mage,                                                 # model
+                    0,                                                    # Direction
+                    (self.battle_area.x-i*15, self.battle_area.y + i*65), # Home zone
+                    ( self.battle_area.x+ self.battle_area.w/2 - 50, self.battle_area.y+ self.battle_area.h/2 - 50), # Battle zone
+                    i*2                                                   # depth
+                )
+            self.sprites.append(self.team1_sprites[mage])
+            for spell in mage.spells:
+                if spell not in self.spells:
+                    self.spells[spell] = spell_factory.build_spell(spell)
+                    if self.spells[spell] != None:
+                        self.sprites.append(self.spells[spell])
             i += 1
 
         i = 0
         self.team2_sprites = { }
         for mage in self.battle.team2:
-            self.team2_sprites[mage] = {
-                "sprite" : MageSprite(mage, 1, (self.battle_area.x+self.battle_area.w+i*15-100, self.battle_area.y + i*65 ),
-                ( self.battle_area.x+ self.battle_area.w/2 - 50, self.battle_area.y+ self.battle_area.h/2 - 50))
-            }
-            self.sprites.append(self.team2_sprites[mage]["sprite"])
+            self.team2_sprites[mage] = MageSprite(
+                    mage,
+                    1,
+                    (self.battle_area.x+self.battle_area.w+i*15-100, self.battle_area.y + i*65),
+                    ( self.battle_area.x+ self.battle_area.w/2 - 50, self.battle_area.y+ self.battle_area.h/2 - 50),
+                    i*2
+                )
+            self.sprites.append(self.team2_sprites[mage])
+            for spell in mage.spells:
+                if spell not in self.spells:
+                    self.spells[spell] = spell_factory.build_spell(spell)
+                    if self.spells[spell] != None:
+                        self.sprites.append(self.spells[spell])
             i += 1
+
+        print(self.spells)
 
         self.image_manager = ImageManager()
         self.stage = self.image_manager.get_image('battle_stage')
 
     def restore_positions(self):
         for mage in self.battle.team1:
-            sprite = self.team1_sprites[mage]['sprite']
+            sprite = self.team1_sprites[mage]
             sprite.set_pos(sprite.start)
             sprite.set_direction(0)
             sprite.show()
 
         for mage in self.battle.team2:
-            sprite = self.team2_sprites[mage]['sprite']
+            sprite = self.team2_sprites[mage]
             sprite.set_pos(sprite.start)
             sprite.set_direction(1)
             sprite.show()
 
     def sync(self):
-        for mage in self.sprites:
-            mage.sync()
+        for sprite in self.sprites:
+            sprite.sync()
+
+    def get_spell(self, spell):
+        if spell in self.spells:
+            return self.spells[spell]
+        return None
 
     def get_mage(self, mage):
         if mage in self.team1_sprites:
@@ -487,22 +606,17 @@ class BattleWindow:
             ((surface.get_width()-self.stage.get_width())/2,
             (surface.get_height()-200 - self.stage.get_height()))
         )
-        for mage in self.sprites:
-            image = mage.render()
-            surface.blit(image, mage.get_pos())
+
+        self.sprites.sort(key=lambda x: x.depth)
+        for sprite in self.sprites:
+            image = sprite.render()
+            surface.blit(image, sprite.get_pos())
 
         return surface
 
     def update(self, delta_t):
-        for mage in self.sprites:
-            mage.update(delta_t)
-
-    def sync(self):
-        for mage in self.sprites:
-            if mage.mage.cur_hp == 0:
-                mage.set_state('dead')
-            else:
-                mage.set_state('idle')
+        for sprite in self.sprites:
+            sprite.update(delta_t)
 
 class VersusBanner:
     def __init__(self, team1, team2):
@@ -667,14 +781,15 @@ class StateLeagueView:
 
         next_table = SequenceAnimation()
         next_table.add_animation(Delay( time=3000 ))
-        next_table.add_animation(FadeOut(self.set_alpha, time=500))
+        next_table.add_animation(FadeOut(self.set_alpha, time=1500))
         next_table.add_animation(DelayCallBack(self.next_window, time=0))
-        next_table.add_animation(FadeIn(self.set_alpha, time=500))
+        next_table.add_animation(FadeIn(self.set_alpha, time=1500))
         self.animations.add_animation(next_table)
 
         close = SequenceAnimation()
         close.add_animation(Delay( time=3000 ))
-        close.add_animation(FadeOut(self.set_alpha, time=500))
+        close.add_animation(FadeOut(self.set_alpha, time=1500))
+        close.add_animation(Delay( time=1000 ))
         self.animations.add_animation(close)
 
         self.alpha = 0
@@ -741,6 +856,7 @@ class StateBattleStart:
             Delay( time=1500 ),
             FadeOut(self.set_alpha, time=1500),
             FadeIn(self.set_alpha, time=1500),
+            Delay( time=4000 ),
         ]
         self.alpha = 0
 
@@ -941,7 +1057,7 @@ class StateInBattle:
             self.animate_does_nothing(move_result)
 
     def process_move_succeed(self, move_result):
-        caster_sprite = self.battle_window.get_mage(move_result['caster'])['sprite']
+        caster_sprite = self.battle_window.get_mage(move_result['caster'])
 
         parallel = ParallelAnimation()
 
@@ -949,6 +1065,7 @@ class StateInBattle:
         show_message = self.message_bar.animate_set_message_show(
             "{} casts {} ".format(move_result['caster'].get_short_name(), move_result['spell'].name)
         )
+
         cast = caster_sprite.animate_cast_spell()
 
         self.animations.add_animation(hide_message_bar)
@@ -958,21 +1075,22 @@ class StateInBattle:
         self.animations.add_animation(Delay(time=1000))
 
         for result in move_result['result']:
-            self.process_spell_cast(result, move_result['caster'])
+            self.process_spell_cast(result, move_result['caster'], move_result['spell'])
 
-    def process_spell_cast(self, cast, caster):
+    def process_spell_cast(self, cast, caster, spell):
         if cast['type'] in ['attack', "rebound", "leech"]:
-            self.process_attack_spell(cast, caster)
+            self.process_attack_spell(cast, caster, spell)
         elif cast['type'] == "healing":
-            self.process_healing_spell(cast, caster)
+            self.process_healing_spell(cast, caster, spell)
         elif cast['type'] == 'stat_reduce':
-            self.process_stat_reduce_spell(cast, caster)
+            self.process_stat_reduce_spell(cast, caster, spell)
         elif cast['type'] == 'stat_boost':
-            self.process_stat_boost_spell(cast, caster)
+            self.process_stat_boost_spell(cast, caster, spell)
 
-    def process_attack_spell(self, cast, caster):
-        target_sprite = self.battle_window.get_mage(cast['target'])['sprite']
-        caster_sprite = self.battle_window.get_mage(caster)['sprite']
+    def process_attack_spell(self, cast, caster, spell):
+        target_sprite = self.battle_window.get_mage(cast['target'])
+        caster_sprite = self.battle_window.get_mage(caster)
+        spell_sprite  = self.battle_window.get_spell(spell.name)
 
         if cast['sustained'] == 0 and cast['target'].cur_hp == 0:
             show_message = self.message_bar.animate_hide_set_message_show(
@@ -993,9 +1111,16 @@ class StateInBattle:
             show_message = self.message_bar.animate_hide_set_message_show(
                 "Hits {} ".format(cast['target'].get_short_name())
             )
+            cast_and_comment = ParallelAnimation()
+            cast_and_comment.add_animation(show_message)
+
+            if spell_sprite != None:
+                spell_animation  = spell_sprite.animate_cast(target_sprite)
+                cast_and_comment.add_animation(spell_animation)
+
             update_stats = self.mage_status.animate_update_health(cast['target'])
             take_damage = target_sprite.animate_take_damage(cast['critical'])
-            self.animations.add_animation(show_message)
+            self.animations.add_animation(cast_and_comment)
             self.animations.add_animation(take_damage)
             self.animations.add_animation(update_stats)
 
@@ -1046,9 +1171,10 @@ class StateInBattle:
                 self.animations.add_animation(show_message)
                 self.animations.add_animation(update_stats)
 
-    def process_stat_boost_spell(self, cast, caster):
-        target_sprite = self.battle_window.get_mage(cast['target'])['sprite']
-        caster_sprite = self.battle_window.get_mage(caster)['sprite']
+    def process_stat_boost_spell(self, cast, caster, spell):
+        target_sprite = self.battle_window.get_mage(cast['target'])
+        caster_sprite = self.battle_window.get_mage(caster)
+        spell_sprite  = self.battle_window.get_spell(spell.name)
 
         if cast['effect'] < 0:
             show_message = self.message_bar.animate_hide_set_message_show(
@@ -1065,11 +1191,18 @@ class StateInBattle:
             show_message = self.message_bar.animate_hide_set_message_show(
                 "{}'s {} rose".format(cast['target'].get_short_name(), cast['stat'])
             )
-            self.animations.add_animation(show_message)
+            cast_and_comment = ParallelAnimation()
+            cast_and_comment.add_animation(show_message)
 
-    def process_stat_reduce_spell(self, cast, caster):
-        target_sprite = self.battle_window.get_mage(cast['target'])['sprite']
-        caster_sprite = self.battle_window.get_mage(caster)['sprite']
+            if spell_sprite != None:
+                spell_animation  = spell_sprite.animate_cast(target_sprite)
+                cast_and_comment.add_animation(spell_animation)
+            self.animations.add_animation(cast_and_comment)
+
+    def process_stat_reduce_spell(self, cast, caster, spell):
+        target_sprite = self.battle_window.get_mage(cast['target'])
+        caster_sprite = self.battle_window.get_mage(caster)
+        spell_sprite  = self.battle_window.get_spell(spell.name)
 
         if cast['effect'] < 0:
             show_message = self.message_bar.animate_hide_set_message_show(
@@ -1086,11 +1219,18 @@ class StateInBattle:
             show_message = self.message_bar.animate_hide_set_message_show(
                 "{}'s {} fell".format(cast['target'].get_short_name(), cast['stat'])
             )
-            self.animations.add_animation(show_message)
+            cast_and_comment = ParallelAnimation()
+            cast_and_comment.add_animation(show_message)
 
-    def process_healing_spell(self, cast, caster):
-        target_sprite = self.battle_window.get_mage(cast['target'])['sprite']
-        caster_sprite = self.battle_window.get_mage(caster)['sprite']
+            if spell_sprite != None:
+                spell_animation  = spell_sprite.animate_cast(target_sprite)
+                cast_and_comment.add_animation(spell_animation)
+            self.animations.add_animation(cast_and_comment)
+
+    def process_healing_spell(self, cast, caster, spell):
+        target_sprite = self.battle_window.get_mage(cast['target'])
+        caster_sprite = self.battle_window.get_mage(caster)
+        spell_sprite  = self.battle_window.get_spell(spell.name)
 
         if cast['target'].cur_hp == 0:
             show_message = self.message_bar.animate_hide_set_message_show(
@@ -1103,13 +1243,18 @@ class StateInBattle:
                 "{} regained {} HP".format(cast['target'].get_short_name(), cast['effect'])
             )
             update_stats = self.mage_status.animate_update_health(cast['target'])
-            self.animations.add_animation(show_message)
+            cast_and_comment = ParallelAnimation()
+            cast_and_comment.add_animation(show_message)
+
+            if spell_sprite != None:
+                spell_animation  = spell_sprite.animate_cast(target_sprite)
+                cast_and_comment.add_animation(spell_animation)
             self.animations.add_animation(update_stats)
 
     def process_move_result(self, move_result):
         self.animations = SequenceAnimation()
 
-        caster_sprite = self.battle_window.get_mage(move_result['caster'])['sprite']
+        caster_sprite = self.battle_window.get_mage(move_result['caster'])
 
         show_planning = self.message_bar.animate_set_message_show (
             "{} is planning a move".format(move_result['caster'].get_short_name()

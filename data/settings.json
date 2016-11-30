@@ -2,7 +2,7 @@
     "sound": {
         "music_volume": 0.7, 
         "sound_volume": 0.9, 
-        "music_enabled": true, 
+        "music_enabled": false, 
         "sound_enabled": true
     }, 
     "screen": {
