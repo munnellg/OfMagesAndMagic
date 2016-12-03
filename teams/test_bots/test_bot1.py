@@ -12,7 +12,7 @@ class Mage:
 
         self.element = "Water"
 
-        self.spells = ["Power Swirl"]
+        self.spells = ["Riptide"]
 
         self.name = "Test 1"
         return
@@ -20,4 +20,4 @@ class Mage:
     def make_move(self, allies, enemies):
         # Tell our bot to do something!
         # This is where the smart part of your AI will go
-        return ("Power Swirl", enemies)
+        return ("Riptide", enemies)

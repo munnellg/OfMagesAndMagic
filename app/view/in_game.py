@@ -287,9 +287,9 @@ class SpellFactory:
 
             "Power Swirl"      : Blueprint("power_swirl",      False, self.OVERLAY,  8,   0,   0),
             "Sting of Neptune" : Blueprint("sting_of_neptune", False, self.OVERLAY,  8,   0,   0),
-            "Water Jet"        : Blueprint("water_jet",        False, self.OVERLAY,  8,   0,   0),
+            "Water Jet"        : Blueprint("water_jet",        True,  self.IN_FRONT, 8, -30,   0),
             "Riptide"          : Blueprint("riptide",          False, self.OVERLAY,  8,   0,   0),
-            "Tidal Wave"       : Blueprint("tidal_wave",       False, self.OVERLAY,  8,   0,   0),
+            "Tidal Wave"       : Blueprint("tidal_wave",       True,  self.OVERLAY,  8,   0,   0),
             "Monsoon"          : Blueprint("monsoon",          False, self.OVERLAY,  8,   0,   0),
             "Absorb"           : Blueprint("absorb",           False, self.OVERLAY,  8,   0,   0),
             "Healing Wave"     : Blueprint("healing_wave",     False, self.OVERLAY,  8,   0,   0),
