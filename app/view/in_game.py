@@ -7,6 +7,8 @@ from app.models.league import League
 from app.view.animations import Delay, FadeIn, FadeOut, ChooseRandom, FrameAnimate, MovePosition, DelayCallBack, MoveValue, SequenceAnimation, ParallelAnimation
 from app.resources import text_renderer, colours
 from app.resources.images import ImageManager
+from app.resources.music import MusicManager
+from app.resources.event_handler import SOUND_EFFECT
 
 def filled_rounded_rect(surface,rect,color,radius=0.4):
 
@@ -118,7 +120,7 @@ class RoundCounter:
     def update(self, delta_t):
         rn = self.battle.get_round_number()
         if rn != self.round_number:
-            self.round_number = rn
+            self.round_number = min(rn, 10)
             self.digit = text_renderer.render_text("{}".format(self.round_number), colours.COLOUR_WHITE)
 
 class MessageBar:
@@ -185,12 +187,13 @@ class MessageBar:
         return sequence
 
 class SpellSprite:
-    def __init__(self, sprite_sheet, has_direction, relative_position, n_frames, anim_width):
+    def __init__(self, sprite_sheet, has_direction, relative_position, n_frames, x_offset, y_offset):
         self.sprite_sheet      = sprite_sheet
         self.has_direction     = has_direction
         self.relative_position = relative_position
         self.n_frames      = n_frames
-        self.anim_width    = anim_width
+        self.x_offset      = x_offset
+        self.y_offset      = y_offset
         self.position      = (0,0)
         self.direction     = 0
         self.depth         = 0
@@ -215,7 +218,8 @@ class SpellSprite:
         self.position     = [target.pos[0], target.pos[1]]
         self.direction    = 1-target.direction if self.has_direction else 0
         self.depth        = target.depth+1
-        self.position[0] += self.anim_width*(self.relative_position*self.direction - self.relative_position*(1-self.direction))
+        self.position[0] += (100+self.x_offset)*(self.relative_position*self.direction - self.relative_position*(1-self.direction))
+        self.position[1] += self.y_offset
 
     def show(self):
         self.hidden = False
@@ -232,14 +236,19 @@ class SpellSprite:
     def set_animation(self, key, animation):
         self.animations[key] = animation
 
-    def animate_cast(self, target):
-        print(1000 * self.n_frames/8.0)
-        move      = DelayCallBack(self.fix_target, [target], time=0)
-        show_self = DelayCallBack(self.show, time=0)
-        animate   = MoveValue(self.set_frame, 0, self.n_frames, time=(1000 * self.n_frames/8.0))
-        hide_self = DelayCallBack(self.hide, time=0)
+    def play_sound_effect(self):
+        event = pygame.event.Event(SOUND_EFFECT, message=self.sprite_sheet)
+        pygame.event.post(event)
 
-        return SequenceAnimation([move, show_self, animate, hide_self])
+    def animate_cast(self, target):
+
+        move       = DelayCallBack(self.fix_target, [target], time=0)
+        show_self  = DelayCallBack(self.show, time=0)
+        make_noise = DelayCallBack(self.play_sound_effect, time=0)
+        animate    = MoveValue(self.set_frame, 0, self.n_frames, time=(1000 * self.n_frames/8.0))
+        hide_self  = DelayCallBack(self.hide, time=0)
+
+        return SequenceAnimation([move, show_self, make_noise, animate, hide_self])
 
 class SpellFactory:
     IN_FRONT =  1
@@ -247,29 +256,60 @@ class SpellFactory:
     BEHIND   = -1
 
     def __init__(self):
-        Blueprint = namedtuple('Blueprint', ['sprite_sheet', 'has_direction', 'position', 'n_frames', 'anim_width'], verbose=False)
+        Blueprint = namedtuple('Blueprint', ['sprite_sheet', 'has_direction', 'position', 'n_frames', 'x_offset', 'y_offset'], verbose=False)
         self.spells = {
-            "Rock Smash"      : Blueprint("rock_smash",      False, self.OVERLAY,  8, 100),
-            "Bassault"        : Blueprint("bassault",        True,  self.IN_FRONT, 8,  70),
-            "Landslide"       : Blueprint("landslide",       False, self.OVERLAY,  8, 100),
-            "Granite Armour"  : Blueprint("granite_armour",  False, self.OVERLAY,  8, 100),
-            "Fracture"        : Blueprint("fracture",        False, self.OVERLAY,  8, 100),
-            "Stalactite Drop" : Blueprint("stalactite_drop", False, self.OVERLAY,  8, 100),
-            "Blizzard"        : Blueprint("blizzard",        False, self.OVERLAY,  8, 100),
-            "Chill Strike"    : Blueprint("chill_strike",    True,  self.IN_FRONT, 8, 100),
-            "Frostbite"       : Blueprint("frostbite",       False, self.OVERLAY,  8, 100),
-            "Glacier"         : Blueprint("glacier",         False, self.OVERLAY,  8, 100),
-            "Ice Breaker"     : Blueprint("ice_breaker",     False, self.OVERLAY,  8, 100),
-            "Frost Storm"     : Blueprint("frost_storm",     False, self.OVERLAY,  8, 100),
-            "Ice Cage"        : Blueprint("ice_cage",        False, self.OVERLAY,  8, 100),
-            "Ice Wall"        : Blueprint("ice_wall",        False, self.OVERLAY,  8, 100),
+            "Rock Smash"       : Blueprint("rock_smash",       False, self.OVERLAY,  8,   0,   0),
+            "Bassault"         : Blueprint("bassault",         True,  self.IN_FRONT, 8, -30,   0),
+            "Landslide"        : Blueprint("landslide",        False, self.OVERLAY,  8,   0,   0),
+            "Granite Armour"   : Blueprint("granite_armour",   False, self.OVERLAY,  8,   0,   0),
+            "Fracture"         : Blueprint("fracture",         False, self.OVERLAY,  8,   0,   0),
+            "Earthquake"       : Blueprint("earthquake",       False, self.OVERLAY,  8,   0,  20),
+            "Stalactite Drop"  : Blueprint("stalactite_drop",  False, self.OVERLAY,  8,   0, -30),
+            "Quicksand"        : Blueprint("quicksand",        False, self.OVERLAY,  8,   0,   0),
+
+            "Blizzard"         : Blueprint("blizzard",         False, self.OVERLAY,  8,   0,   0),
+            "Chill Strike"     : Blueprint("chill_strike",     False, self.OVERLAY,  8,   0,   0),
+            "Frostbite"        : Blueprint("frostbite",        False, self.OVERLAY,  8,   0,   0),
+            "Glacier"          : Blueprint("glacier",          True,  self.OVERLAY,  8,   0,   0),
+            "Ice Breaker"      : Blueprint("ice_breaker",      True,  self.IN_FRONT, 8, -40,   0),
+            "Frost Storm"      : Blueprint("frost_storm",      False, self.OVERLAY,  8,   0, -30),
+            "Ice Cage"         : Blueprint("ice_cage",         False, self.OVERLAY,  8,   0,   0),
+            "Ice Wall"         : Blueprint("ice_wall",         True,  self.OVERLAY,  8,   0,   0),
+
+            "Revenge of Tesla" : Blueprint("revenge_of_tesla", False, self.OVERLAY,  8,   0,   0),
+            "Jolt"             : Blueprint("jolt",             True,  self.OVERLAY,  8,   0,   0),
+            "Thunder Storm"    : Blueprint("thunder_storm",    False, self.OVERLAY,  8,   0, -30),
+            "Lightning Blade"  : Blueprint("lightning_blade",  True,  self.IN_FRONT, 8, -80,   0),
+            "Lightning Bolt"   : Blueprint("lightning_bolt",   False, self.OVERLAY,  8,   0,   0),
+            "Voltage Slam"     : Blueprint("voltage_slam",     False, self.OVERLAY,  8,   0,   0),
+            "Charge"           : Blueprint("charge",           True,  self.BEHIND,   8, -30,   5),
+            "Shattering Bolt"  : Blueprint("shattering_bolt",  False, self.OVERLAY,  8,   0,   0),
+
+            "Power Swirl"      : Blueprint("power_swirl",      False, self.OVERLAY,  8,   0,   0),
+            "Sting of Neptune" : Blueprint("sting_of_neptune", False, self.OVERLAY,  8,   0,   0),
+            "Water Jet"        : Blueprint("water_jet",        False, self.OVERLAY,  8,   0,   0),
+            "Riptide"          : Blueprint("riptide",          False, self.OVERLAY,  8,   0,   0),
+            "Tidal Wave"       : Blueprint("tidal_wave",       False, self.OVERLAY,  8,   0,   0),
+            "Monsoon"          : Blueprint("monsoon",          False, self.OVERLAY,  8,   0,   0),
+            "Absorb"           : Blueprint("absorb",           False, self.OVERLAY,  8,   0,   0),
+            "Healing Wave"     : Blueprint("healing_wave",     False, self.OVERLAY,  8,   0,   0),
+
+            "Fireball"         : Blueprint("fireball",         True,  self.OVERLAY,  8,   0,   0),
+            "Drop Mixtape"     : Blueprint("drop_mixtape",     False, self.OVERLAY,  8,   0,   0),
+            "Lava Storm"       : Blueprint("lava_storm",       False, self.OVERLAY,  8,   0, -30),
+            "Flame Wave"       : Blueprint("flame_wave",       True,  self.OVERLAY,  8,   0,   0),
+            "Blazing Salvo"    : Blueprint("blazing_salvo",    False, self.OVERLAY,  8,   0,   0),
+            "Backdraft"        : Blueprint("backdraft",        True,  self.OVERLAY,  8,   0,   0),
+            "Solar Blaze"      : Blueprint("solar_blaze",      False, self.OVERLAY,  8,   0,   0),
+            "Unmake"           : Blueprint("unmake",           False, self.OVERLAY,  8,   0,   0),
         }
 
     def assemble(self, blueprint):
-        return SpellSprite(blueprint.sprite_sheet, blueprint.has_direction, blueprint.position, blueprint.n_frames, blueprint.anim_width)
+        return SpellSprite(blueprint.sprite_sheet, blueprint.has_direction, blueprint.position, blueprint.n_frames, blueprint.x_offset, blueprint.y_offset)
 
     def build_spell(self, spell_id):
         if spell_id not in self.spells:
+            print("No spell animation for {}".format(spell_id))
             return None
         else:
             return self.assemble(self.spells[spell_id])
@@ -359,6 +399,10 @@ class MageSprite:
             return self.image_manager.get_tile(self.sprite_sheet, self.frame, self.direction)
         return pygame.Surface((0,0))
 
+    def play_sound_faint(self):
+        event = pygame.event.Event(SOUND_EFFECT, message='faint')
+        pygame.event.post(event)
+
     def animate_move_start_to_combat(self):
         walk = DelayCallBack(self.set_state, ['walking'], time=0)
         move = MovePosition(self.start, self.combat_zone, self.set_pos, time=1000)
@@ -392,7 +436,9 @@ class MageSprite:
         return SequenceAnimation([walk, dodge_back, dodge_forward,idle])
 
     def animate_faint(self):
-        return DelayCallBack(self.set_state, ['dead'], time=0)
+        noise = DelayCallBack(self.play_sound_faint, time=0)
+        faint = DelayCallBack(self.set_state, ['dead'], time=0)
+        return SequenceAnimation([noise, faint])
 
     def animate_take_damage(self, critical = False):
         sequence = SequenceAnimation()
@@ -565,8 +611,6 @@ class BattleWindow:
                     if self.spells[spell] != None:
                         self.sprites.append(self.spells[spell])
             i += 1
-
-        print(self.spells)
 
         self.image_manager = ImageManager()
         self.stage = self.image_manager.get_image('battle_stage')
@@ -762,6 +806,10 @@ class MatchTable:
                 self.width - team_name.get_width(),
                 (self.cell_height - team_name.get_height())//2 + self.cell_height*counter
             ))
+
+            if counter - 1 < self.league.get_current_match():
+                pygame.draw.line(surface, colours.COLOUR_WHITE, (0,self.cell_height*(counter+1) - self.cell_height//2), (self.width, self.cell_height*(counter+1) - self.cell_height//2), 5)
+
             counter = counter+1
 
         return surface
@@ -791,6 +839,13 @@ class StateLeagueView:
         close.add_animation(FadeOut(self.set_alpha, time=1500))
         close.add_animation(Delay( time=1000 ))
         self.animations.add_animation(close)
+
+        #music_manager = MusicManager()
+        #music_manager.restore_music_volume()
+        #music_manager.load_next_song()
+        self.music_manager = MusicManager()
+        self.music_manager.restore_music_volume()
+        self.music_manager.play_song("league", loops=-1)
 
         self.alpha = 0
 
@@ -850,14 +905,22 @@ class StateBattleStart:
             self.parent.battle.team1.get_short_name(),
             self.parent.battle.team2.get_short_name()
         )
+        self.music_manager = MusicManager()
+        self.volume = self.music_manager.get_music_volume()
+        fade = ParallelAnimation()
+        fade_display = FadeOut(self.set_alpha, time=1500)
+        fade_sound = MoveValue(self.music_manager.set_music_volume, self.volume, 0,  time=1500)
+        fade.add_animation(fade_display)
+        fade.add_animation(fade_sound)
 
         self.animations = [
             FadeIn(self.set_alpha, time=1500),
             Delay( time=1500 ),
-            FadeOut(self.set_alpha, time=1500),
+            fade,
+            DelayCallBack(self.switch_music, time=0),
             FadeIn(self.set_alpha, time=1500),
-            Delay( time=4000 ),
         ]
+
         self.alpha = 0
 
         self.cur_animation = 0
@@ -888,6 +951,11 @@ class StateBattleStart:
         surface.blit(mask, (0,0))
 
         return surface
+
+    def switch_music(self):
+        self.music_manager.restore_music_volume()
+        self.music_manager.play_song("battle", loops=-1)
+        return
 
     def update(self, delta_t):
         self.battle_window.update(delta_t)
@@ -926,6 +994,10 @@ class StateInBattle:
         self.skip_turn = False
         self.skip_game = False
         self.paused    = False
+
+    def play_sound_effect(self, effect):
+        event = pygame.event.Event(SOUND_EFFECT, message=effect)
+        pygame.event.post(event)
 
     def render(self):
         window  = self.battle_window.render()
@@ -1047,6 +1119,9 @@ class StateInBattle:
         update_message_bar = self.message_bar.animate_hide_set_message_show (
             self.gen_do_nothing_string(move_result['caster'].get_short_name())
         )
+        make_noise = DelayCallBack(self.play_sound_effect, ['nope'], time=0)
+
+        self.animations.add_animation(make_noise)
         self.animations.add_animation(update_message_bar)
         self.animations.add_animation(Delay(time=1000))
 
@@ -1075,11 +1150,11 @@ class StateInBattle:
         self.animations.add_animation(Delay(time=1000))
 
         for result in move_result['result']:
-            self.process_spell_cast(result, move_result['caster'], move_result['spell'])
+            self.process_spell_cast(result, move_result['caster'], move_result['spell'], len(move_result['result'])<2)
 
-    def process_spell_cast(self, cast, caster, spell):
+    def process_spell_cast(self, cast, caster, spell, report_fainted=True):
         if cast['type'] in ['attack', "rebound", "leech"]:
-            self.process_attack_spell(cast, caster, spell)
+            self.process_attack_spell(cast, caster, spell, report_fainted)
         elif cast['type'] == "healing":
             self.process_healing_spell(cast, caster, spell)
         elif cast['type'] == 'stat_reduce':
@@ -1087,17 +1162,18 @@ class StateInBattle:
         elif cast['type'] == 'stat_boost':
             self.process_stat_boost_spell(cast, caster, spell)
 
-    def process_attack_spell(self, cast, caster, spell):
+    def process_attack_spell(self, cast, caster, spell, report_fainted=True):
         target_sprite = self.battle_window.get_mage(cast['target'])
         caster_sprite = self.battle_window.get_mage(caster)
         spell_sprite  = self.battle_window.get_spell(spell.name)
 
         if cast['sustained'] == 0 and cast['target'].cur_hp == 0:
-            show_message = self.message_bar.animate_hide_set_message_show(
-                "{} is already unconscious".format(cast['target'].get_short_name())
-            )
-            self.animations.add_animation(show_message)
-            self.animations.add_animation(Delay(time=1000))
+            if report_fainted:
+                show_message = self.message_bar.animate_hide_set_message_show(
+                    "{} is already unconscious".format(cast['target'].get_short_name())
+                )
+                self.animations.add_animation(show_message)
+                self.animations.add_animation(Delay(time=1000))
         elif cast['evades']:
             show_message = self.message_bar.animate_hide_set_message_show(
                 "{} evades the attack".format(cast['target'].get_short_name())
@@ -1188,16 +1264,17 @@ class StateInBattle:
             )
             self.animations.add_animation(show_message)
         else:
+            if spell_sprite != None:
+                spell_animation  = spell_sprite.animate_cast(target_sprite)
+                self.animations.add_animation(spell_animation)
+
             show_message = self.message_bar.animate_hide_set_message_show(
                 "{}'s {} rose".format(cast['target'].get_short_name(), cast['stat'])
             )
-            cast_and_comment = ParallelAnimation()
-            cast_and_comment.add_animation(show_message)
 
-            if spell_sprite != None:
-                spell_animation  = spell_sprite.animate_cast(target_sprite)
-                cast_and_comment.add_animation(spell_animation)
-            self.animations.add_animation(cast_and_comment)
+
+            self.animations.add_animation(show_message)
+            self.animations.add_animation(Delay(time=1000))
 
     def process_stat_reduce_spell(self, cast, caster, spell):
         target_sprite = self.battle_window.get_mage(cast['target'])
@@ -1226,6 +1303,7 @@ class StateInBattle:
                 spell_animation  = spell_sprite.animate_cast(target_sprite)
                 cast_and_comment.add_animation(spell_animation)
             self.animations.add_animation(cast_and_comment)
+            self.animations.add_animation(Delay(time=1000))
 
     def process_healing_spell(self, cast, caster, spell):
         target_sprite = self.battle_window.get_mage(cast['target'])
@@ -1239,16 +1317,17 @@ class StateInBattle:
             self.animations.add_animation(show_message)
             self.animations.add_animation(Delay(time=1000))
         else:
+            if spell_sprite != None:
+                spell_animation  = spell_sprite.animate_cast(target_sprite)
+                self.animations.add_animation(spell_animation)
+
             show_message = self.message_bar.animate_hide_set_message_show(
                 "{} regained {} HP".format(cast['target'].get_short_name(), cast['effect'])
             )
             update_stats = self.mage_status.animate_update_health(cast['target'])
-            cast_and_comment = ParallelAnimation()
-            cast_and_comment.add_animation(show_message)
 
-            if spell_sprite != None:
-                spell_animation  = spell_sprite.animate_cast(target_sprite)
-                cast_and_comment.add_animation(spell_animation)
+            self.animations.add_animation(show_message)
+
             self.animations.add_animation(update_stats)
 
     def process_move_result(self, move_result):
@@ -1305,6 +1384,10 @@ class StateBattleEnd:
         self.animations.add_animation( Delay( time=1500 ) )
         self.animations.add_animation( FadeOut(self.set_overlay_alpha, time=500))
         self.animations.add_animation( Delay( time=1000 ) )
+
+        music_manager = MusicManager()
+        music_manager.restore_music_volume()
+        music_manager.play_song("victory", loops=-1)
 
         self.game_alpha    = 255
         self.overlay_alpha = 255

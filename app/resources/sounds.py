@@ -29,9 +29,47 @@ class SoundManager:
                 self.sounds[os.path.splitext(sound_name)[0]].set_volume(self.volume)
 
             self.sound_effects = {
-                'menu_move'  : 'menu_move',
-                'menu_click' : 'menu_click',
-                'menu_scroll': 'menu_scroll'
+                'menu_move'       : 'menu_move',
+                'menu_click'      : 'menu_click',
+                'menu_scroll'     : 'menu_scroll',
+                'revenge_of_tesla': 'revenge_of_tesla',
+                'jolt'            : 'jolt',
+                'lightning_bolt'  : 'lightning_bolt',
+                'lightning_blade' : 'lightning_blade',
+                'thunder_storm'   : 'thunder_storm',
+                'voltage_slam'    : 'voltage_slam',
+                'charge'          : 'charge',
+                'shattering_bolt' : 'shattering_bolt',
+                'stalactite_drop' : 'stalactite_drop',
+                'bassault'        : 'bassault',
+                'rock_smash'      : 'rock_smash',
+                'earthquake'      : 'earthquake',
+                'fracture'        : 'fracture',
+                'landslide'       : 'landslide',
+                'granite_armour'  : 'granite_armour',
+                'faint'           : 'faint',
+                'quicksand'       : 'quicksand',
+                'blizzard'        : 'blizzard',
+                'frost_storm'     : 'frost_storm',
+                'glacier'         : 'glacier',
+                'ice_cage'        : 'ice_cage',
+                'frostbite'       : 'frost_bite',
+                'chill_strike'    : 'chill_strike',
+                'ice_breaker'     : 'ice_breaker',
+                'ice_wall'        : 'ice_wall',
+                'drop_mixtape'    : 'drop_mixtape',
+                'blazing_salvo'   : 'blazing_salvo',
+                'fireball'        : 'fireball',
+                'lava_storm'      : 'lava_storm',
+                'flame_wave'      : 'flame_wave',
+                'backdraft'       : 'backdraft',
+                'solar_blaze'     : 'solar_blaze',
+                'unmake'          : 'unmake',
+                'power_swirl'     : 'power_swirl',
+                'monsoon'         : 'monsoon',
+                'healing_wave'    : 'healing_wave',
+                'absorb'          : 'absorb',
+                'nope'            : 'nope',
             }
 
         def play_sound(self, sound_name):
@@ -53,14 +91,14 @@ class SoundManager:
             self.enabled = enabled
 
         def handle_settings_update(self, event):
-            if self.volume != self.settings['sound']['sound_volume']:
-                self.set_volume(self.settings['sound']['sound_volume'])
+            self.set_volume(self.settings['sound']['sound_volume'])
 
             if self.enabled != self.settings['sound']['sound_enabled']:
                 self.enabled = self.settings['sound']['sound_enabled']
 
         def handle_sound_effect(self, event):
-            self.play_sound(self.sound_effects[event.message])
+            if event.message in self.sound_effects:
+                self.play_sound(self.sound_effects[event.message])
 
         def still_playing(self):
             return pygame.mixer.get_busy()

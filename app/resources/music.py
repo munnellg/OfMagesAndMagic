@@ -33,10 +33,10 @@ class MusicManager:
 
             self.soundtrack = {
                 "main_menu" : [ "long_road" ],
-                "in_game"   : [ "preliator", "killers", "ff8", "skyrim" ]
+                # "in_game"   : [ "preliator", "killers", "ff8", "skyrim" ]
             }
 
-        def play_song(self, song_name, volume = -1):
+        def play_song(self, song_name, volume = -1, loops=1):
             if not self.enabled:
                 return
 
@@ -52,7 +52,7 @@ class MusicManager:
 
             if self.now_playing != song_name or not pygame.mixer.music.get_busy():
                 pygame.mixer.music.load(os.path.join(MUSIC_DIR, self.music[song_name]))
-                pygame.mixer.music.play(1)
+                pygame.mixer.music.play(loops)
                 self.now_playing = song_name
 
         def load_playlist(self, playlist):
@@ -83,9 +83,8 @@ class MusicManager:
                 self.load_next_song()
 
         def handle_settings_update(self, event):
-            if self.volume != self.settings['sound']['music_volume']:
-                self.set_music_volume(self.settings['sound']['music_volume'])
-                self.set_default_music_volume(self.settings['sound']['music_volume'])
+            self.set_music_volume(self.settings['sound']['music_volume'])
+            self.set_default_music_volume(self.settings['sound']['music_volume'])
 
             if self.enabled != self.settings['sound']['music_enabled']:
                 self.set_enabled(self.settings['sound']['music_enabled'])
@@ -94,7 +93,7 @@ class MusicManager:
             self.load_next_song()
 
         def handle_state_change(self, event):
-            self.volume = self.default_volume
+            self.set_music_volume(self.default_volume)
             self.load_playlist(event.state)
             self.load_next_song()
 

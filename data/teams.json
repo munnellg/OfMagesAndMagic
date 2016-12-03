@@ -1,37 +1,8 @@
 {
-    "Team 2": [
-        "teams.alpha1.team2.alpha1",
-        "teams.alpha1.team2.alpha2",
-        "teams.alpha1.team2.alpha3",
-        "teams.alpha1.team2.alpha4",
-        "teams.alpha1.team2.alpha5"
+    "Test 1": [
+        "teams.test_bots.test_bot1"
     ],
-    "Team 5": [
-        "teams.alpha1.team5.alpha1",
-        "teams.alpha1.team5.alpha2",
-        "teams.alpha1.team5.alpha3",
-        "teams.alpha1.team5.alpha4",
-        "teams.alpha1.team5.alpha5"
-    ],
-    "Team 4": [
-        "teams.alpha1.team4.alpha1",
-        "teams.alpha1.team4.alpha2",
-        "teams.alpha1.team4.alpha3",
-        "teams.alpha1.team4.alpha4",
-        "teams.alpha1.team4.alpha5"
-    ],
-    "Team 3": [
-        "teams.alpha1.team3.alpha1",
-        "teams.alpha1.team3.alpha2",
-        "teams.alpha1.team3.alpha3",
-        "teams.alpha1.team3.alpha4",
-        "teams.alpha1.team3.alpha5"
-    ],
-    "Team 1": [
-        "teams.alpha1.team1.alpha1",
-        "teams.alpha1.team1.alpha2",
-        "teams.alpha1.team1.alpha3",
-        "teams.alpha1.team1.alpha4",
-        "teams.alpha1.team1.alpha5"
+    "Test 2": [
+        "teams.test_bots.test_bot2"
     ]
 }

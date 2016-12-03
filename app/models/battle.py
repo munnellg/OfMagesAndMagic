@@ -14,11 +14,14 @@ class Move:
 
 class BattleRound:
     def __init__(self, team1, team2):
-        self.move_order = [Move(mage, team1, team2) for mage in team1 if mage.is_conscious()]
-        self.move_order += [Move(mage, team2, team1) for mage in team2 if mage.is_conscious()]
-        random.shuffle(self.move_order)
-        self.move_order.sort(key=lambda move: -move.rank)
+        self.move_order = []
+        for i in range(max(len(team1), len(team2))):
+            if i < len(team1) and team1[i].is_conscious():
+                self.move_order.append(Move(team1[i], team1, team2))
+            if i < len(team2) and team2[i].is_conscious():
+                self.move_order.append(Move(team2[i], team2, team1))
 
+        self.move_order.sort(key=lambda move: -move.rank)
         self.cur_move = 0
 
     def next_move(self):
@@ -26,6 +29,7 @@ class BattleRound:
         self.cur_move += 1
         while self.cur_move < len(self.move_order) and not self.move_order[self.cur_move].mage.is_conscious():
             self.cur_move += 1
+
         return result
 
     def round_over(self):
@@ -91,7 +95,7 @@ class Battle:
             dt2 = [tm.get_remaining_health_percentage() for tm in self.team2]
             dt1 = sum(dt1)
             dt2 = sum(dt2)
-            
+
             return self.team1.get_short_name() if dt1 > dt2 else self.team2.get_short_name()
 
         return None

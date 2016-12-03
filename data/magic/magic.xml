@@ -113,7 +113,7 @@
             <element>Fire</element>
         </spell>
         <spell name="Unmake" type="single">
-            <effect type="stat_reduce" power="1" stat="defense" accuracy="100"/>
+            <effect type="stat_reduce" power="1" stat="attack" accuracy="100"/>
             <element>Fire</element>
         </spell>
 

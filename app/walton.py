@@ -121,7 +121,8 @@ class Walton:
             )
 
         # Wait for any sound effects to stop playing
-        while self.sound_manager.still_playing():
-            continue
+        if self.state_code == "main_menu":
+            while self.sound_manager.still_playing():
+                continue
 
         self.quit = True
