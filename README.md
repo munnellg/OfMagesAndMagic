@@ -11,11 +11,11 @@ A simple AI based fighting game for teaching Python
 
 ## How to code an AI
 
-The goal of *Of Mages and Magic* was to provide a simple programming
+The goal for *Of Mages and Magic* was to provide a simple programming
 interface that would allow novice developers to write real,
-functioning code while adding an interesting challenge to the task of
-figuring out the language's syntax. This section of the README will
-run through the basics of how this was implemented.
+functioning Python code while adding an interesting challenge to the
+task of figuring out the language's syntax. This section of the README
+will run through the basics of how this was implemented.
 
 For every student, their task is to write a bot - a little piece of
 code which will analyze the state of the game and make decisions based
@@ -41,16 +41,16 @@ student's want they can program a completely introspective bot.
 
 At a minimum, a Mage object should have the following attributes:
 
-+ *name* : The name to be printed on screen for the bot.
-+ *attack* : The attack power of the bot
-+ *defense* : Bot's ability to withstand damage
-+ *health* : Amount of damage bot can take before being eliminated
-+ *speed* : How fast the bot can move. Determines move order and
++ _name_ : The name to be printed on screen for the bot.
++ _attack_ : The attack power of the bot
++ _defense_ : Bot's ability to withstand damage
++ _health_ : Amount of damage bot can take before being eliminated
++ _speed_ : How fast the bot can move. Determines move order and
   evasion probability
-+ *spells* : A list of spells known by the bot. Should not be more
++ _spells_ : A list of spells known by the bot. Should not be more
   than four elements long (a mage can only know four spells). Game
   will truncate longer lists
-+ *element* : The magic specialization of the bot. Should be one of
++ _element_ : The magic specialization of the bot. Should be one of
   "Fire", "Water", "Earth", "Thunder" or "Ice"
 
 The sum of `attack`, `defense`, `health` and `speed` should not be
@@ -97,9 +97,9 @@ long. See the sample below for a fire mage:
 
 This will tell the bot to cast a fireball spell and target an enemy
 from the enemies list. The bot has not chosen a specific target, so
-the game will select on for them. However, the game does not guarantee
+the game will select one for them. However, the game does not guarantee
 that it will pick a good (or even a living target). This is a minimum
-effort bot and the quality of it's behaviour reflects that.
+effort bot and the quality of its behaviour reflects that.
 
 A much better bot would attempt to scan the list of enemies to find a
 target against which they are most effective. In the case of a fire
@@ -242,25 +242,25 @@ directory structure described above would look like this:
 
     teams/
     |
-    |---- `__init__.py`
+    |---- __init__.py
     |
     |---- alpha_squad/
     |     |
-    |     |---- `__init__.py`
-    |     |---- `alpha1.py`
-    |     |---- `alpha2.py`
-    |      |---- `alpha3.py`
-    |      |---- `alpha4.py`
-    |      |---- `alpha5.py`
+    |     |---- __init__.py
+    |     |---- alpha1.p
+    |     |---- alpha2.py
+    |      |---- alpha3.py
+    |      |---- alpha4.py
+    |      |---- alpha5.py
     |
     |-----mystic_marvels/
           |
-          |---- `__init__.py`
-          |---- `allanon.py`
-          |---- `gandalf.py`
-          |---- `merlin.py`
-          |---- `minirva.py`
-          |---- `morrigan.py`
+          |---- __init__.py
+          |---- allanon.py
+          |---- gandalf.py
+          |---- merlin.py
+          |---- minirva.py
+          |---- morrigan.py
 
 The directory structure does not affect the organization of the
 teams. The following structure for `data/teams.json` is just as valid as
