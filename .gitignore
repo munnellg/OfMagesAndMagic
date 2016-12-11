@@ -1,6 +1,8 @@
 __pycache__
 *.pyc
 data/music
+data/settings.json
+.idea/
 teams/alpha*
 alpha*.json
 bkup_teams.json
