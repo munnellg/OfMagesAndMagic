@@ -5,6 +5,8 @@ COLOUR_WHITE = ( 255,  255, 255)
 COLOUR_GREY  = ( 128,  128, 128)
 COLOUR_BLACK = (   0,    0,   0)
 
+COLOUR_YELLOW = (255,223,0)
+
 # Greens & Browns
 COLOUR_LEAVES_OF_AUTUMN = ( 101,  91,  19 )
 COLOUR_628450           = (  98, 132,  80 )

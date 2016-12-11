@@ -1,25 +1,17 @@
 class Mage:
     def __init__(self):
-        # We'll enter our bot's stats here
-        # health, attack, defense, speed
-        # element
-        # spells
-        # name
-        self.attack = 25
-        self.health = 45
-        self.speed = 5
-        self.defense = 25
+
+        self.name = "Alpha 4"
+
+        self.health  = 50
+        self.attack  = 20
+        self.defense = 10
+        self.speed   = 20
 
         self.element = "Fire"
 
-        self.spells = ["Fireball", "Flame Wave"]
-
-        self.name = "Hillary Clinton"
-        return
+        self.spells = [ "Fireball" ]
 
     def make_move(self, allies, enemies):
-        # Tell our bot to do something!
-        # This is where the smart part of your AI will go
-        
         return("Fireball",enemies)
     

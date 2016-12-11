@@ -2,7 +2,7 @@ import pygame
 import json
 import sys
 from app.resources import directories
-from app.view import main_menu, in_game, announce_winners
+from app.view import main_menu, in_game, winners
 from app.models.magic import SpellBook
 from app.models.battle import Battle
 from app.resources.music import MusicManager
@@ -47,7 +47,7 @@ class Walton:
         self.states = {
             'main_menu' : main_menu.MainMenu,
             'in_game'   : in_game.Game,
-            'announce_winners' : announce_winners.AnnounceWinners
+            'announce_winners' : winners.AnnounceWinners
         }
         self.state_code = None
         SpellBook.load_spell_book(directories.MAGIC_PATH)

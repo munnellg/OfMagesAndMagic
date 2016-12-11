@@ -1,19 +1,14 @@
 class Mage:
     def __init__(self):
-        self.name = "Adzy Cage"
+        self.name = "Alpha 1"
         self.element = "Water"
 
-        self.health = 50
-        self.attack = 20
+        self.health  = 50
+        self.attack  = 20
         self.defense = 10
-        self.speed = 20
+        self.speed   = 20
 
-        self.spells = ["Monsoon", "Absorb", "Water Jet", "Tidal Wave"]
-
-        return
+        self.spells = [ "Water Jet" ]
 
     def make_move(self, allies, enemies):
-        for enemy in enemies:
-            if enemy.element in ["Earth", "Fire"] and enemy.health > 0:
-                return ("Absorb", enemy)
-        return ("Absorb", enemies)
+        return ("Water Jet", enemy)
