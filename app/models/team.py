@@ -13,7 +13,7 @@ class Team(list):
             try:
                 manager = MageManager(mage())
                 self.append(manager)
-            except Exception,e:
+            except Exception as e:
                 print(e)
 
     def reinitialize(self):
@@ -52,7 +52,7 @@ def load_teams(path):
             try:
                 i = importlib.import_module(mage)
                 teams[team].append(i.Mage)
-            except Exception,e:
+            except Exception as e:
                 print(e)
 
     return [Team(team, teams[team]) for team in teams]
