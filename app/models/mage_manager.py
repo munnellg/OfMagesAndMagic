@@ -97,7 +97,7 @@ class MageManager:
         try:
             # Get the AI to make a choice
             decision = self.mage.make_move(flattened_allies, flattened_enemies)
-        except Exception, e:
+        except Exception as e:
             return {"success" : False, "caster" :self, "reason" : "does nothing"}
 
         # Test to ensure that the AI returned a tuple (valid choice)
@@ -140,7 +140,7 @@ class MageManager:
         try:
             # Cast the spell!
             summary = self.cast_spell(decision[0], target)
-        except Exception, e:
+        except Exception as e:
             print(e)
             return {"success" : False, "caster" :self, "reason" : "does nothing"}
         return summary
